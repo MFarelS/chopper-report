@@ -1,7 +1,13 @@
 {
-  "name": "root",
+  "name": "chopper-report",
   "private": true,
+  "workspaces": {
+    "packages": [
+      "packages/*"
+    ]
+  },
   "devDependencies": {
-    "lerna": "^4.0.0"
-  }
+    "@rxdi/firelink": "^0.8.0"
+  },
+  "fireConfig": {}
 }

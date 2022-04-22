@@ -1,0 +1,13 @@
+.leaflet-container {
+  height: 100%;
+}
+
+.plane-icon {
+  background: none;
+  border: none;
+  fill: white;
+  color: white;
+  font-size: 24px;
+  z-index: 999 !important;
+  filter: drop-shadow(2px 2px 0 rgb(0 0 0 / 0.3));
+}

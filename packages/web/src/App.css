@@ -1,38 +1,72 @@
-.App {
+body {
+  background-color: #F1F2F7;
+}
+
+.app {
+}
+
+.map {
+  height: 50vh;
+  min-height: 500px;
+}
+
+.container {
+  padding: 0 180px;
+  min-height: 80vh;
+}
+
+.MuiGrid-item {
+  margin: auto !important;
+}
+
+header h4 {
+  padding: 20px;
+}
+
+.accent {
+  color: #52AEDD;
+}
+
+.subtle {
+  color: #AEAEB2 !important;
+}
+
+footer {
+  position: fixed;
+  bottom: 20px;
   text-align: center;
+  width: 100%;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.konami {
+  /*height: 18px;*/
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.debug-panel {
+  padding: 20px;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.debug-panel > div {
+  padding-right: 20px;
 }
 
-.App-link {
-  color: #61dafb;
+.current-location-outer {
+  height: 14px;
+  width: 14px;
+  border-color: white;
+  border-style: solid;
+  border-radius: 50%;
+  border-width: 5px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.current-location {
+  width: 100%;
+  height: 100%;
+  background-color: #52AEDD;
+  border-radius: 50%;
+}
+
+.image-modal {
+  z-index: 99999;
 }

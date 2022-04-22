@@ -1,0 +1,11 @@
+.aircraft {
+  padding-top: 10px;
+}
+
+.aircraft .thumbnail {
+  object-fit: contain;
+  width: 100%;
+  height: 140px;
+  padding-top: 20px;
+  pointer-events: all;
+}

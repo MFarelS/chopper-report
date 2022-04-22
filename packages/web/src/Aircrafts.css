@@ -1,0 +1,12 @@
+.aircrafts {
+  text-align: center;
+  margin: auto 0;
+}
+
+.aircrafts nav {
+  margin: auto 10px;
+}
+
+.aircrafts nav ul {
+  justify-content: center;
+}

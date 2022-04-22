@@ -1,0 +1,40 @@
+{
+  "name": "@chopper-report/functions",
+  "description": "Cloud Functions for Firebase",
+  "version": "0.0.1",
+  "scripts": {
+    "serve": "firebase emulators:start --only functions",
+    "shell": "firebase functions:shell",
+    "start": "npm run shell",
+    "deploy": "firebase deploy --only functions",
+    "logs": "firebase functions:log"
+  },
+  "engines": {
+    "node": "14"
+  },
+  "main": "index.js",
+  "fireDependencies": {
+    "@chopper-report/database": "../../packages/database",
+    "@chopper-report/jobs": "../../packages/jobs",
+    "@chopper-report/utils": "../../packages/utils"
+  },
+  "dependencies": {
+    "@chopper-report/database": "*",
+    "firebase-admin": "^9.8.0",
+    "firebase-functions": "^3.14.1",
+    "@chopper-report/jobs": "*",
+    "@chopper-report/utils": "*"
+  },
+  "devDependencies": {
+    "firebase-functions-test": "^0.2.0"
+  },
+  "fireConfig": {
+    "runner": "firebase",
+    "outFolderName": ".packages",
+    "outFolderLocation": "../../",
+    "excludes": [
+      "node_modules"
+    ]
+  },
+  "private": true
+}
