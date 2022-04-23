@@ -1,6 +1,6 @@
 {
   "name": "@chopper-report/jobs",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "> TODO: description",
   "author": "Evan Coleman <e@edc.me>",
   "homepage": "https://github.com/evandcoleman/chopper-report#readme",
@@ -19,17 +19,16 @@
     "url": "git+https://github.com/evandcoleman/chopper-report.git"
   },
   "scripts": {
-    "test": "echo \"Error: run tests from root\" && exit 1"
+    "run": "node run.js"
   },
   "bugs": {
     "url": "https://github.com/evandcoleman/chopper-report/issues"
   },
-  "fireDependencies": {
-    "@chopper-report/database": "../../packages/database",
-    "@chopper-report/utils": "../../packages/utils"
-  },
   "dependencies": {
-    "@chopper-report/database": "*",
-    "@chopper-report/utils": "*"
+    "@chopper-report/database": "^0.0.1",
+    "@chopper-report/utils": "^0.0.1"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.0"
   }
 }

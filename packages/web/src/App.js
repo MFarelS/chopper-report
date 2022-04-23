@@ -38,11 +38,16 @@ function App(props) {
     try {
       (async () => {
         console.log("fetching aircraft...");
-        setAircrafts(await props.api.current(location));
+        props.api.states({})
+        // setAircrafts(await props.api.current(location));
       })();
     } catch (error) {
       console.log(error);
     }
+  }
+
+  const updateMapRadius = (radius) => {
+
   }
 
   useEffect(() => {
@@ -85,7 +90,11 @@ function App(props) {
         <Grid item xs={5}>
           <div id="map" className="map">
             <MapContainer className="map-container" center={[location.latitude, location.longitude]} zoom={15}>
-              <Map onClick={(location) => !debug || setLocation(location)} location={location} aircrafts={aircrafts} />
+              <Map
+                onUpdateMapRadius={updateMapRadius}
+                onClick={(location) => !debug || setLocation(location)}
+                location={location}
+                aircrafts={aircrafts} />
             </MapContainer>
           </div>
         </Grid>

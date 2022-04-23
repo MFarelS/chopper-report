@@ -2,19 +2,21 @@ const { opensky } = require('@chopper-report/utils');
 const database = require('@chopper-report/database');
 
 module.exports = {
-  run: async (database) => {
+  run: async () => {
+    console.log('[JOBS/update] Updating states...');
     const { time, states } = await opensky.states({
       lamin: process.env.LATITUDE_MIN,
       lamax: process.env.LATITUDE_MAX,
       lomin: process.env.LONGITUDE_MIN,
       lomax: process.env.LONGITUDE_MAX,
     });
+    console.log('[JOBS/update] Found', (states || []).length, 'states.');
     const results = (states || [])
-      .filter((state) => state.on_ground !== true)
+      .filter((state) => state.on_ground !== true && state.icao24 !== null && state.icao24 !== undefined && state.icao24 !== '')
       .map((state) => {
         return {
-          icao24: state.icao24,
-          callsign: state.callsign,
+          icao24: state.icao24.trim(),
+          callsign: state.callsign.trim(),
           time: time,
           last_contact: state.last_contact,
           longitude: state.longitude,
@@ -28,6 +30,6 @@ module.exports = {
         };
       });
 
-    await database.writeStates(database, results);
+    await database.admin().writeStates(results);
   },
 };

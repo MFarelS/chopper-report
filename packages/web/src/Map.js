@@ -1,15 +1,23 @@
 import './Map.css';
 
-import { TileLayer, Marker, Popup, useMapEvent } from 'react-leaflet';
+import { TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import { divIcon } from "leaflet";
 import { renderToString } from "react-dom/server";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlane, faHelicopter } from '@fortawesome/free-solid-svg-icons'
 
-function Map({ location, aircrafts, selectedIndex, onClick }) {
+function Map({ location, aircrafts, selectedIndex, onClick, onUpdateMapRadius }) {
 
-  const map = useMapEvent('click', ({ latlng }) => {
-    onClick({ latitude: latlng.lat, longitude: latlng.lng });
+  const map = useMapEvents({
+    click: ({ latlng }) => {
+      onClick({ latitude: latlng.lat, longitude: latlng.lng });
+    },
+    moveend: (event) => {
+      console.log(event);
+    },
+    zoomend: (event) => {
+      console.log(event);
+    },
   });
 
   let makePlaneIcon = (aircraft, isSelected) => {

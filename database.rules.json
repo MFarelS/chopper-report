@@ -1,6 +1,78 @@
 {
   "rules": {
-    ".read": true,
-    ".write": false
+    "states": {
+      ".read": true,
+      "$state": {
+        ".write": "auth !== null",
+        ".validate": "newData.hasChildren(['icao24', 'time'])",
+        "icao24": {
+          ".validate": "newData.isString()"
+        },
+        "callsign": {
+          ".validate": "newData.isString()"
+        },
+        "time": {
+          ".validate": "newData.isString()"
+        },
+        "last_contact": {
+          ".validate": "newData.isString()"
+        },
+        "latitude": {
+          ".validate": "newData.isNumber()"
+        },
+        "longitude": {
+          ".validate": "newData.isNumber()"
+        },
+        "baro_altitude": {
+          ".validate": "newData.isNumber()"
+        },
+        "velocity": {
+          ".validate": "newData.isNumber()"
+        },
+        "true_track": {
+          ".validate": "newData.isNumber()"
+        },
+        "vertical_rate": {
+          ".validate": "newData.isNumber()"
+        },
+        "gps_altitude": {
+          ".validate": "newData.isNumber()"
+        },
+        "squawk": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "geofire": {
+      ".indexOn": ["g"],
+      ".read": true,
+      "$state": {
+        ".write": "auth !== null",
+        ".validate": "newData.hasChildren(['g', 'l']) && newData.getPriority().length <= 22 && newData.getPriority().length > 0",
+        "g": {
+          ".validate": "newData.val() == newData.parent().getPriority()"
+        },
+        "l": {
+          "0" : {
+            ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+          },
+          "1" : {
+            ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    },
+    "$other": {
+      ".validate": false
+    }
   }
 }

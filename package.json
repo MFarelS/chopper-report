@@ -9,5 +9,12 @@
   "devDependencies": {
     "@rxdi/firelink": "^0.8.0"
   },
+  "main": "packages/firebase-functions/dist/index.js",
+  "scripts": {
+    "deploy": "firebase deploy",
+    "deploy:functions": "firebase deploy --only functions",
+    "deploy:database": "firebase deploy --only database",
+    "job": "cd packages/jobs && npm run run"
+  },
   "fireConfig": {}
 }

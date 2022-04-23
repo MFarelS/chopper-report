@@ -1,8 +1,4 @@
 module.exports = {
-  states: (database, { lamin, lamax, lomin, lomax }, callback) => {
-    
-  },
-  writeStates: async (database, states) => {
-    
-  },
+  admin: () => require('./lib/admin'),
+  client: () => require('./lib/client'),
 };
