@@ -1,0 +1,4 @@
+[build]
+  base = "packages/web/"
+  publish = "build/"
+  command = "yarn install && yarn workspace @chopper-report/web run build"
