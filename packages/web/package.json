@@ -17,7 +17,6 @@
     "@testing-library/user-event": "^13.5.0",
     "@turf/turf": "^6.5.0",
     "assert": "^2.0.0",
-    "crypto": "^1.0.1",
     "fs": "^0.0.1-security",
     "leaflet": "^1.7.1",
     "moment": "^2.29.3",
