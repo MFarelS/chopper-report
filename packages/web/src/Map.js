@@ -6,7 +6,7 @@ import { renderToString } from "react-dom/server";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlane, faHelicopter, faLocationArrow } from '@fortawesome/free-solid-svg-icons'
 import IconButton from '@mui/material/IconButton';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import * as turf from "@turf/turf";
 
 function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, onClick }) {
@@ -28,7 +28,7 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
 
   useEffect(() => {
     map.flyTo([location.latitude, location.longitude]);
-  }, [location]);
+  }, [location, map]);
 
   const onLocate = () => {
     map.locate();

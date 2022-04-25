@@ -14,10 +14,8 @@ function distance(lat1, lon1, lat2, lon2) {
   var R = 6371; // km
   var dLat = toRad(lat2-lat1);
   var dLon = toRad(lon2-lon1);
-  var lat1 = toRad(lat1);
-  var lat2 = toRad(lat2);
 
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)); 
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
   var d = R * c;
   return d;
@@ -26,7 +24,7 @@ function distance(lat1, lon1, lat2, lon2) {
 function Home({ api, debug, options, setOption }) {
 
   const radius = 1500;
-  const [search, setSearch] = useSearchParams();
+  const [search] = useSearchParams();
   const [state, setState] = useState({
     aircrafts: {},
     selectedIcao24: null,
@@ -97,7 +95,7 @@ function Home({ api, debug, options, setOption }) {
       });
     });
     setCancellation(cancel);
-  }, [lat, lon]);
+  }, [lat, lon, api, cancellation, location, search]);
 
   useEffect(() => {
     if (interval.current) {

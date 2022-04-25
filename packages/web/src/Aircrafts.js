@@ -2,7 +2,7 @@ import './Aircrafts.css';
 
 import Aircraft from './Aircraft';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 import Typography from '@mui/material/Typography';
 import Pagination from '@mui/material/Pagination';
@@ -13,7 +13,6 @@ import { Carousel } from 'react-responsive-carousel';
 
 function Aircrafts({ api, debug, options, location, aircrafts, allIcao24s, setSelectedIcao24, selectedIcao24 }) {
 
-  const carousel = useRef(null);
   const [page, setPage] = useState(1);
 
   const [modalImage, setModalImage] = useState(null);
@@ -21,10 +20,6 @@ function Aircrafts({ api, debug, options, location, aircrafts, allIcao24s, setSe
   const handleChangePage = (event, value) => {
     setPage(value);
     setSelectedIcao24(allIcao24s[value - 1]);
-    // if (carousel.current) {
-    //   console.log(carousel.current);
-    //   carousel.current.changeItem(value - 1);
-    // }
   };
 
   return (
@@ -59,7 +54,7 @@ function Aircrafts({ api, debug, options, location, aircrafts, allIcao24s, setSe
         open={modalImage !== null}
         onClick={() => setModalImage(null)}
       >
-        <img src={modalImage} />
+        <img alt="large aircraft image" src={modalImage} />
       </Backdrop>}
     </div>
   );

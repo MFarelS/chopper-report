@@ -46,7 +46,7 @@ function Aircraft({ api, debug, location, options, state, metadata, history, dis
     } catch (error) {
       console.log(error);
     }
-  }, [state.callsign]);
+  }, [state.callsign, api]);
 
   let rows = [
     { data: state, key: "callsign", title: "Callsign", href: (value) => `https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=${metadata.registration}` },
@@ -181,7 +181,7 @@ function Aircraft({ api, debug, location, options, state, metadata, history, dis
               </TableBody>
             </Table>
           </TableContainer>
-          {photos.length > 0 && <img onClick={() => setModalImage(photos[0])} className="thumbnail" src={photos[0]} />}
+          {photos.length > 0 && <img alt="aircraft image" onClick={() => setModalImage(photos[0])} className="thumbnail" src={photos[0]} />}
         </Grid>
       </Grid>
     </div>

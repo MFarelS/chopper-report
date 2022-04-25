@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import Typography from '@mui/material/Typography';
 import { useNavigate } from "react-router-dom";
 import CircularProgress from '@mui/material/CircularProgress';
 import Box from '@mui/material/Box';
@@ -20,7 +19,7 @@ function Splash() {
     } catch (error) {
       console.log(error);
     }
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="splash">

@@ -6,7 +6,7 @@ import Debug from './Debug';
 import { withAPI } from './API';
 import Typography from '@mui/material/Typography';
 import Konami from 'react-konami-code';
-import { BrowserRouter as Router, Link, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState } from 'react';
 
 function App({ api }) {
