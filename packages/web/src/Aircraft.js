@@ -181,7 +181,7 @@ function Aircraft({ api, debug, location, options, state, metadata, history, dis
               </TableBody>
             </Table>
           </TableContainer>
-          {photos.length > 0 && <img alt="aircraft image" onClick={() => setModalImage(photos[0])} className="thumbnail" src={photos[0]} />}
+          {photos.length > 0 && <img alt="aircraft" onClick={() => setModalImage(photos[0])} className="thumbnail" src={photos[0]} />}
         </Grid>
       </Grid>
     </div>

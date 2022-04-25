@@ -2,7 +2,7 @@ import Grid from '@mui/material/Grid';
 import { MapContainer } from 'react-leaflet';
 import Aircrafts from './Aircrafts';
 import Map from './Map';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { getFlightPathPrediction } from './lib/helpers';
 
@@ -35,7 +35,7 @@ function Home({ api, debug, options, setOption }) {
   const { lat, lon, zoom } = useParams();
   const navigate = useNavigate();
 
-  const location = { latitude: lat, longitude: lon };
+  const location = useMemo(() => ({ latitude: lat, longitude: lon }), [lat, lon]);
   const steps = 50;
   const duration = 10; // in seconds
 

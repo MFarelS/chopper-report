@@ -54,7 +54,7 @@ function Aircrafts({ api, debug, options, location, aircrafts, allIcao24s, setSe
         open={modalImage !== null}
         onClick={() => setModalImage(null)}
       >
-        <img alt="large aircraft image" src={modalImage} />
+        <img alt="large aircraft" src={modalImage} />
       </Backdrop>}
     </div>
   );
