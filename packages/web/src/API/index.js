@@ -1,5 +1,5 @@
 import APIContext, { withAPI } from './context';
-import API from './api';
+import API from '@chopper-report/api-client';
  
 export default API;
  

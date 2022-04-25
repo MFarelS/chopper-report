@@ -1,5 +1,43 @@
 {
   "rules": {
+    "aircrafts": {
+      ".read": true,
+      "$icao24": {
+        ".write": "auth !== null",
+        "photos": {
+          "$url": {
+            ".validate": "newData.isString()"
+          }
+        },
+        "registration": {
+          ".validate": "newData.isString()"
+        },
+        "manufacturer": {
+          ".validate": "newData.isString()"
+        },
+        "model": {
+          ".validate": "newData.isString()"
+        },
+        "typecode": {
+          ".validate": "newData.isString()"
+        },
+        "serialNumber": {
+          ".validate": "newData.isString()"
+        },
+        "icaoAircraftClass": {
+          ".validate": "newData.isString()"
+        },
+        "owner": {
+          ".validate": "newData.isString()"
+        },
+        "lastUpdated": {
+          ".validate": "newData.isString()"
+        },
+        "$other": {
+          ".validate": "newData.isString()"
+        }
+      }
+    },
     "states": {
       ".read": true,
       "$state": {

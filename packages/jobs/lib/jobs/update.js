@@ -1,5 +1,5 @@
 const { opensky } = require('@chopper-report/utils');
-const database = require('@chopper-report/database');
+const database = require('@chopper-report/database-admin');
 
 module.exports = {
   run: async () => {
@@ -17,7 +17,7 @@ module.exports = {
         return {
           icao24: state.icao24.trim(),
           callsign: state.callsign.trim(),
-          time: time,
+          time: state.last_contact,
           last_contact: state.last_contact,
           longitude: state.longitude,
           latitude: state.latitude,
@@ -30,6 +30,6 @@ module.exports = {
         };
       });
 
-    await database.admin().writeStates(results);
+    await database.writeStates(results);
   },
 };

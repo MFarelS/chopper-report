@@ -7,39 +7,70 @@ import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableRow from '@mui/material/TableRow';
+import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import * as moment from 'moment';
 import { useState, useEffect } from 'react';
 
-function Aircraft({ api, location, state, setModalImage }) {
+// takes degrees and returns direction
+function getDirection(degrees) {
+  if (degrees >= 337.5 || degrees < 22.5) {
+    return 'N';
+  } else if (degrees >= 22.5 && degrees < 67.5) {
+    return 'NE';
+  } else if (degrees >= 67.5 && degrees < 112.5) {
+    return 'E';
+  } else if (degrees >= 112.5 && degrees < 157.5) {
+    return 'SE';
+  } else if (degrees >= 157.5 && degrees < 202.5) {
+    return 'S';
+  } else if (degrees >= 202.5 && degrees < 247.5) {
+    return 'SW';
+  } else if (degrees >= 247.5 && degrees < 292.5) {
+    return 'W';
+  } else if (degrees >= 292.5 && degrees < 337.5) {
+    return 'NW';
+  }
+}
 
-  const [aircraft, setAircraft] = useState(null);
+function Aircraft({ api, debug, location, options, state, metadata, history, distance, setModalImage }) {
+
+  const [route, setRoute] = useState([]);
 
   useEffect(() => {
     try {
       (async () => {
-        if (aircraft === null) {
-          const metadata = await api.metadata({ icao24: state.icao24 });
-          setAircraft(metadata);
-        }
+        const r = await api.route({ callsign: state.callsign });
+        setRoute(r);
       })();
     } catch (error) {
       console.log(error);
     }
-  }, []);
-  
+  }, [state.callsign]);
+
   let rows = [
-    { data: state, key: "callsign", title: "Callsign" },
-    { data: aircraft, key: "registration", title: "Registration", href: (value) => `https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=${value}` },
-    { data: aircraft, keys: ["manufacturerName", "model"], title: "Aircraft Type" },
-    { data: aircraft, key: "owner", title: "Owner" },
+    { data: state, key: "callsign", title: "Callsign", href: (value) => `https://registry.faa.gov/AircraftInquiry/Search/NNumberResult?nNumberTxt=${metadata.registration}` },
+    { data: metadata, keys: ["manufacturer", "model"], title: "Aircraft Type" },
+    { data: metadata, key: "owner", title: "Owner", formatter: (value) => value.replace("Llc", "LLC") },
     { data: state, key: "baro_altitude", title: "Calibrated Altitude", unit: "ft", multiplier: 3.28084 },
-    { data: state, key: "geo_altitude", title: "GPS Altitude", unit: "ft", multiplier: 3.28084 },
+    { data: state, key: "gps_altitude", title: "GPS Altitude", unit: "ft", multiplier: 3.28084 },
     { data: state, key: "velocity", title: "Ground Speed", unit: "mph", multiplier: 2.23694 },
     { data: state, key: "vertical_rate", title: "Vertical Speed", unit: "fpm", multiplier: 196.85 },
-    { data: state, key: "true_track", title: "Coarse", unit: "°", separator: '' },
+    { data: state, key: "true_track", title: "Coarse", formatter: (value) => `${value.toFixed(0)}° (${getDirection(value)})` },
     { data: state, key: "last_contact", title: "Last Contact", formatter: (value) => moment.unix(value).fromNow() },
+    { data: state, key: "icao24", title: "ICAO24" },
+    { data: state, key: "flightradar", value: "View on FlightRadar24", title: "", href: (value) => `https://fr24.com/${value.callsign}` },
   ];
+
+  if (debug) {
+    rows.push({ data: metadata, key: "icaoAircraftClass", title: "🐞 Aircraft Class" });
+    rows.push({ key: "historyCount", title: "🐞 History Count", value: history.length });
+    if (options.showHistory) {
+      for (let s of history) {
+        rows.push({ key: `history-${s.time}`, title: `🗓 ${moment.unix(s.time).format("h:mma")}`, value: s.baro_altitude, unit: "ft", multiplier: 3.28084 });
+      }
+    }
+  }
 
   const getProperty = (data, keyPath) => {
     if (keyPath.indexOf('.') > -1) {
@@ -52,19 +83,25 @@ function Aircraft({ api, location, state, setModalImage }) {
     }
   };
 
-  const getValue = (aircraft, row) => {
+  const getValue = (row) => {
+    if (!row.data && !row.value) {
+      return "N/A";
+    }
+
     if (row.keys) {
-      return row.keys
+      return [...new Set(row.keys
         .map((key) => {
           let newRow = Object.assign({}, row);
           delete newRow.keys;
           newRow.key = key;
 
-          return getValue(aircraft, newRow);
-        })
+          return getValue(newRow);
+        }))]
         .join(row.separator || ' ');
+    } else if (row.value) {
+      return row.value;
     } else {
-      let value = getProperty(aircraft, row.key);
+      let value = getProperty(row.data, row.key);
 
       if (value) {
         if (row.formatter) {
@@ -94,27 +131,27 @@ function Aircraft({ api, location, state, setModalImage }) {
     }
   };
 
-  const route = (aircraft || {}).route || [];
   const departure = route[0] || "—";
   const arrival = (route.length > 1 ? route[route.length - 1] : null) || "—";
 
   let hoverTime = null;
+  let hoverSuffix = '.';
 
-  if (aircraft && aircraft.hovering_time) {
-    const minutes = (aircraft.hovering_time / 60).toFixed();
+  if (state && state.hovering_time) {
+    hoverTime = moment.duration(state.hovering_time * 1000).humanize();
 
-    if (minutes === 60) {
-      hoverTime = 'more than 1 hour';
-    } else {
-      hoverTime = `${minutes} minutes`;
+    if (distance > 5) {
+      hoverSuffix = ', although it looks like it may be gone now 🥳'
     }
   }
 
+  const photos = Object.values((metadata || {}).photos || {});
+
   return (
-    <div className="aircraft">
-      {aircraft && <Grid className="aircraft-container" container spacing={2}>
-        {hoverTime && <Grid item xs={12}>
-          <Typography className="hover-time" variant="subtitle1" component="span">{aircraft.callsign} has been hovering for <strong>{hoverTime}</strong></Typography>
+    <div className="aircraft" key={state.icao24}>
+      <Grid className="aircraft-container" container spacing={2}>
+        {hoverTime && <Grid item xs={12} style={{ padding: 0 }}>
+          <Typography className="hover-time" variant="subtitle1" component="span">{state.callsign} has been hovering for <strong>{hoverTime}</strong>{hoverSuffix}</Typography>
         </Grid>}
         <Grid item style={{ padding: 0 }} xs={12}>
           <TableContainer style={{ minWidth: 200, maxWidth: 560, margin: 'auto', marginTop: '20px' }} component={Paper}>
@@ -130,23 +167,23 @@ function Aircraft({ api, location, state, setModalImage }) {
                   </TableCell>
                 </TableRow>
                 {rows.map((row) => (
-                  <TableRow key={row.key}>
+                  <TableRow key={row.key || row.keys[0]}>
                     <TableCell component="th" scope="row">
                       {row.title}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell align="right">
-                      {row.href && <a target="_blank" href={row.href(getValue(aircraft, row))}>{getValue(aircraft, row)}</a>}
-                      {!row.href && getValue(aircraft, row)}
+                      {row.href && <Link target="_blank" href={row.href(row.data)}>{getValue(row)}</Link>}
+                      {!row.href && getValue(row)}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
           </TableContainer>
-          {aircraft.photos.length > 0 && <img onClick={() => setModalImage(aircraft.photos[0])} className="thumbnail" src={aircraft.photos[0]} />}
+          {photos.length > 0 && <img onClick={() => setModalImage(photos[0])} className="thumbnail" src={photos[0]} />}
         </Grid>
-      </Grid>}
+      </Grid>
     </div>
   );
 }

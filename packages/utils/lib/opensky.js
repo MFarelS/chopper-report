@@ -1,4 +1,4 @@
-const nodeFetch = require('node-fetch');
+const fetch = require('node-fetch').default;
 
 // https://opensky-network.org/apidoc/rest.html
 const apiBase = `https://opensky-network.org/api`;
@@ -10,15 +10,15 @@ function makeURL(path) {
   return `${apiBase}${path}`;
 }
 
-async function fetch(url, options, retryCount) {
-  const response = await nodeFetch(url, options);
+async function request(url, options, retryCount) {
+  const response = await fetch(url, options);
 
   if (!response.ok) {
     if (options.retry && options.retry > (retryCount || 0)) {
       if (options.pause && options.pause > 0) {
         await new Promise(resolve => setTimeout(resolve, options.pause));
       }
-      return fetch(url, options, (retryCount || 0) + 1);
+      return request(url, options, (retryCount || 0) + 1);
     } else {
       console.log(await response.text());
       let error = new Error(`${response.status} ${response.statusText}: ${url}`);
@@ -36,7 +36,7 @@ module.exports = {
     const url = makeURL(`/states/all?lamin=${lamin}&lamax=${lamax}&lomin=${lomin}&lomax=${lomax}`);
 
     try {
-      const response = await fetch(url, { headers, retry: 5, pause: 1000 });
+      const response = await request(url, { headers, retry: 5, pause: 1000 });
       const json = await response.json();
 
       if (!json.states) {
@@ -75,7 +75,7 @@ module.exports = {
     let url = makeURL(`/metadata/aircraft/icao/${icao24}`);
 
     try {
-      const response = await fetch(url, { headers, retry: 3, pause: 1000 });
+      const response = await request(url, { headers, retry: 3, pause: 1000 });
       const json = await response.json();
 
       return json;
@@ -87,7 +87,7 @@ module.exports = {
     let url = makeURL(`/routes?callsign=${callsign}`);
 
     try {
-      const response = await fetch(url, { headers, retry: 3, pause: 1000 });
+      const response = await request(url, { headers, retry: 3, pause: 1000 });
       const json = await response.json();
 
       if (!json.route) {

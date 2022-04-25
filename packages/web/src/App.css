@@ -25,6 +25,7 @@ header h4 {
 
 .accent {
   color: #52AEDD;
+  fill: #52AEDD;
 }
 
 .subtle {
@@ -46,18 +47,20 @@ footer {
   padding: 20px;
 }
 
-.debug-panel > div {
+.debug-panel > label {
   padding-right: 20px;
 }
 
 .current-location-outer {
-  height: 14px;
-  width: 14px;
+  margin-top: -11px !important;
+  margin-left: -11px !important;
+  height: 12px;
+  width: 12px;
   border-color: white;
   border-style: solid;
   border-radius: 50%;
   border-width: 5px;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 22px;
 }
 
 .current-location {
@@ -69,4 +72,17 @@ footer {
 
 .image-modal {
   z-index: 99999;
+}
+
+.hover-time {
+  line-height: 40px !important;
+}
+
+.locate-button {
+  color: black !important;
+  width: 30px;
+  height: 30px;
+  font-size: 16px !important;
+  border-radius: 6.67% !important;
+  background-color: white !important;
 }

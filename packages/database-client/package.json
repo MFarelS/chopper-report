@@ -1,5 +1,5 @@
 {
-  "name": "@chopper-report/database",
+  "name": "@chopper-report/database-client",
   "version": "0.0.1",
   "description": "> TODO: description",
   "author": "Evan Coleman <e@edc.me>",
@@ -24,5 +24,8 @@
   "bugs": {
     "url": "https://github.com/evandcoleman/chopper-report/issues"
   },
-  "dependencies": {}
+  "dependencies": {
+    "firebase": "8",
+    "geofire": "^5.2.0"
+  }
 }

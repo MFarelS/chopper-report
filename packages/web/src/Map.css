@@ -7,7 +7,29 @@
   border: none;
   fill: white;
   color: white;
-  font-size: 24px;
+  font-size: 14px;
   z-index: 999 !important;
   filter: drop-shadow(2px 2px 0 rgb(0 0 0 / 0.3));
+}
+
+.plane-icon-active {
+  color: #F7CE46 !important;
+  fill: #F7CE46 !important;
+}
+
+.radius-circle {
+  stroke: #EB4E3D !important;
+}
+
+path.leaflet-interactive {
+  stroke: #65C466;
+}
+
+.debug-label {
+  color: white;
+  font-size: 9px;
+}
+
+.route-line {
+  stroke: #65C466;
 }

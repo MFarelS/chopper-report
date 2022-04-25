@@ -1,5 +1,5 @@
 {
-  "name": "@chopper-report/jobs",
+  "name": "@chopper-report/database-admin",
   "version": "0.0.1",
   "description": "> TODO: description",
   "author": "Evan Coleman <e@edc.me>",
@@ -19,16 +19,13 @@
     "url": "git+https://github.com/evandcoleman/chopper-report.git"
   },
   "scripts": {
-    "run": "node run.js"
+    "test": "echo \"Error: run tests from root\" && exit 1"
   },
   "bugs": {
     "url": "https://github.com/evandcoleman/chopper-report/issues"
   },
   "dependencies": {
-    "@chopper-report/database-admin": "^0.0.1",
-    "@chopper-report/utils": "^0.0.1"
-  },
-  "devDependencies": {
-    "dotenv": "^16.0.0"
+    "firebase-admin": "^10.1.0",
+    "geofire": "^5.2.0"
   }
 }
