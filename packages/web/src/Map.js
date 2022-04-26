@@ -8,8 +8,11 @@ import { faPlane, faHelicopter, faLocationArrow } from '@fortawesome/free-solid-
 import IconButton from '@mui/material/IconButton';
 import { useEffect } from 'react';
 import * as turf from "@turf/turf";
+import { useParams } from "react-router-dom";
 
 function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, onClick }) {
+
+  const { zoom } = useParams();
 
   const map = useMapEvents({
     click: (event) => {
@@ -22,7 +25,11 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
       onClick({ latitude: latlng.lat, longitude: latlng.lng, zoom: 13 });
     },
     zoomend: ({ target }) => {
-      // window.history.replaceState(null, null, `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${target.getZoom().toFixed(0)}`)
+      const path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${target.getZoom().toFixed(0)}`;
+      
+      if (path !== window.location.pathname + window.location.search) {
+        window.history.replaceState(null, null, path)
+      }
     },
   });
 
@@ -36,7 +43,7 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
 
   let makePlaneIcon = (aircraft, isSelected) => {
     const iconMarkup = renderToString(
-      <FontAwesomeIcon icon={faPlane} style={{ transform: `rotate(${aircraft.true_track}deg)` }} />
+      <FontAwesomeIcon icon={faPlane} style={{ transform: `rotate(${aircraft.true_track - 90}deg)` }} />
     );
     const planeIcon = divIcon({
       html: iconMarkup,
@@ -113,15 +120,15 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
         const isSelected = icao24 === selectedIcao24;
         const icon = isHelicopter() ? makeChopperIcon(state, isSelected) : makePlaneIcon(state, isSelected);
         const position = [state.latitude, state.longitude];
-        const positions = recentHistory.map((s) => [s.latitude, s.longitude]);
-        const adjusted = turf.bezierSpline(turf.lineString(positions), {
+        const positions = recentHistory.map((s) => [s.latitude, s.longitude]) || [];
+        const adjusted = positions.length > 0 ? turf.bezierSpline(turf.lineString(positions), {
           sharpness: 0.95,
           resolution: 50000,
-        }).geometry.coordinates;
+        }).geometry.coordinates : [];
 
         return (
           <div key={icao24}>
-          <Marker key={icao24} position={position} icon={icon} />
+          <Marker key={`${icao24}:${state.latitude}:${state.longitude}`} position={position} icon={icon} />
           {isSelected && <Polyline className="route-line" key={`${icao24}:polyline`} positions={adjusted} />}
           {isSelected && recentHistory.map((state) => (
             <Circle key={`${icao24}:${state.time}`} radius={4} center={position} />

@@ -1,4 +1,5 @@
 import * as database from '@chopper-report/database-client';
+import * as turf from "@turf/turf";
 
 class API {
 
@@ -10,6 +11,22 @@ class API {
   states(location, radius, time, callback) {
     const that = this;
     database.hoveringStates(location, radius, { time }, (event, icao24, state, history) => {
+      that.metadata({ icao24 })
+        .then((metadata) => {
+          callback(event, icao24, state, metadata, history);
+        })
+        .catch(console.log);
+    });
+  }
+
+  allStates(location, radius, time, callback) {
+    const that = this;
+    const point = turf.point([location.latitude, location.longitude]);
+    const buffered = turf.circle(point, radius / 1000, { units: 'kilometers', steps: 8 });
+    const box = turf.bboxPolygon(turf.square(turf.bbox(buffered)));
+    const coordinates = [[box.bbox[0], box.bbox[1]], [box.bbox[2], box.bbox[3]]];
+
+    database.states(coordinates, { time }, (event, icao24, state, history) => {
       that.metadata({ icao24 })
         .then((metadata) => {
           callback(event, icao24, state, metadata, history);

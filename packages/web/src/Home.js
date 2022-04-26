@@ -2,7 +2,7 @@ import Grid from '@mui/material/Grid';
 import { MapContainer } from 'react-leaflet';
 import Aircrafts from './Aircrafts';
 import Map from './Map';
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { getFlightPathPrediction } from './lib/helpers';
 
@@ -23,7 +23,6 @@ function distance(lat1, lon1, lat2, lon2) {
 
 function Home({ api, debug, options, setOption }) {
 
-  const radius = 1500;
   const [search] = useSearchParams();
   const [state, setState] = useState({
     aircrafts: {},
@@ -31,13 +30,16 @@ function Home({ api, debug, options, setOption }) {
     allIcao24s: [],
   });
   const [cancellation, setCancellation] = useState(null);
-  const interval = useRef(0);
+  const [interval, setUpdateInterval] = useState(null);
   const { lat, lon, zoom } = useParams();
   const navigate = useNavigate();
 
   const location = useMemo(() => ({ latitude: lat, longitude: lon }), [lat, lon]);
-  const steps = 50;
-  const duration = 10; // in seconds
+  const steps = 1500;
+  const duration = 300; // in seconds
+  const showAll = false;
+  const statesFunction = showAll ? api.allStates : api.states;
+  const radius = showAll ? 5000: 1500;
 
   useEffect(() => {
     console.log('Updating...');
@@ -49,7 +51,7 @@ function Home({ api, debug, options, setOption }) {
       selectedIcao24: null,
       allIcao24s: [],
     });
-    const cancel = api.states(location, radius, search.get('time'), (event, icao24, state, metadata, history) => {
+    const cancel = statesFunction.call(api, location, radius, search.get('time'), (event, icao24, state, metadata, history) => {
       setState(oldState => {
         switch (event) {
           case 'entered':
@@ -68,9 +70,9 @@ function Home({ api, debug, options, setOption }) {
                 steps
               ),
               isHelicopter: () => {
-                return metadata.icaoAircraftClass.startsWith("H")
-                  || metadata.manufacturer.split(" ").indexOf("Bell") > -1
-                  || metadata.manufacturer.split(" ").indexOf("Robinson") > -1;
+                return (metadata.icaoAircraftClass || "").startsWith("H")
+                  || (metadata.manufacturer || "").split(" ").indexOf("Bell") > -1
+                  || (metadata.manufacturer || "").split(" ").indexOf("Robinson") > -1;
               },
             };
             break;
@@ -95,44 +97,50 @@ function Home({ api, debug, options, setOption }) {
       });
     });
     setCancellation(cancel);
-  }, [lat, lon, api, cancellation, location, search]);
+  }, [lat, lon, api, cancellation, location, search, radius, statesFunction]);
 
   useEffect(() => {
-    if (interval.current) {
-      window.clearInterval(interval.current);
+    if (interval) {
+      window.clearInterval(interval);
     }
 
     let counter = 0;
 
-    interval.current = window.setInterval(() => {
+    setUpdateInterval(window.setInterval(() => {
       if (counter < steps) {
-        const updatedAircrafts = Object.keys(state.aircrafts).reduce((acc, icao24) => {
-          const aircraft = state.aircrafts[icao24];
-          const step = aircraft.predictions;
-          if (step && step[counter]) {
-            return {
-              ...acc,
-              [icao24]: {
-                ...aircraft,
-                state: {
-                  ...aircraft.state,
-                  longitude: step[counter].geometry.coordinates[0],
-                  latitude: step[counter].geometry.coordinates[1]
+        setState(state => {
+          const updatedAircrafts = Object.keys(state.aircrafts).reduce((acc, icao24) => {
+            const aircraft = state.aircrafts[icao24];
+            const step = aircraft.predictions;
+            if (step && step[counter]) {
+              return {
+                ...acc,
+                [icao24]: {
+                  ...aircraft,
+                  state: {
+                    ...aircraft.state,
+                    longitude: step[counter].geometry.coordinates[0],
+                    latitude: step[counter].geometry.coordinates[1]
+                  }
                 }
-              }
-            };
-          } else {
-            return acc;
-          }
-        }, {});
-        setState(state => ({ ...state, aircrafts: updatedAircrafts }));
+              };
+            } else {
+              return {
+                ...acc,
+                [icao24]: aircraft,
+              };
+            }
+          }, {});
+
+          return { ...state, aircrafts: updatedAircrafts }
+        });
 
         counter++;
       } else {
-        window.clearInterval(interval.current);
+        window.clearInterval(interval);
       }
-    }, (1000 * duration) / steps);
-  }, [state.aircrafts]);
+    }, (1000 * duration) / steps));
+  }, []);
 
   return (
     <Grid className="container" container spacing={2}>

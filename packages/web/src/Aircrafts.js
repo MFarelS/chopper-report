@@ -22,19 +22,21 @@ function Aircrafts({ api, debug, options, location, aircrafts, allIcao24s, setSe
     setSelectedIcao24(allIcao24s[value - 1]);
   };
 
+  const presentIcaos = allIcao24s.filter(icao24 => aircrafts[icao24]);
+
   return (
     <div className="aircrafts">
       <Stack spacing={2}>
-        {allIcao24s.length === 0 && <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">Nothing is hovering over you at the moment 🙌</Typography>}
-        {allIcao24s.length === 1 && <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">There's one aircraft hovering over you 😩</Typography>}
-        {allIcao24s.length > 1 && <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">There are {allIcao24s.length} aircrafts hovering over you 🤬</Typography>}
+        {presentIcaos.length === 0 && <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">Nothing is hovering over you at the moment 🙌</Typography>}
+        {presentIcaos.length === 1 && <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">There's one aircraft hovering over you 😩</Typography>}
+        {presentIcaos.length > 1 && <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">There are {presentIcaos.length} aircrafts hovering over you 🤬</Typography>}
         <Carousel
           selectedItem={page - 1}
           showArrows={false}
           showThumbs={false}
           showStatus={false}
           showIndicators={false} >
-          {allIcao24s.map((icao24, index) => (
+          {presentIcaos.map((icao24, index) => (
             <Aircraft
               api={api}
               debug={debug}
@@ -47,9 +49,9 @@ function Aircrafts({ api, debug, options, location, aircrafts, allIcao24s, setSe
               key={icao24} />
           ))}
         </Carousel>
-        {allIcao24s.length > 1 && <Pagination count={allIcao24s.length} page={page} onChange={handleChangePage} />}
+        {presentIcaos.length > 1 && <Pagination count={presentIcaos.length} page={page} onChange={handleChangePage} />}
       </Stack>
-      {aircrafts && allIcao24s[page - 1] && <Backdrop
+      {aircrafts && presentIcaos[page - 1] && <Backdrop
         className="image-modal"
         open={modalImage !== null}
         onClick={() => setModalImage(null)}
