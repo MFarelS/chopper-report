@@ -5,10 +5,10 @@ import { divIcon } from "leaflet";
 import { renderToString } from "react-dom/server";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPlane, faHelicopter, faLocationArrow } from '@fortawesome/free-solid-svg-icons'
-import IconButton from '@mui/material/IconButton';
 import { useEffect } from 'react';
 import * as turf from "@turf/turf";
 import { useParams } from "react-router-dom";
+import Button from 'react-bootstrap/Button';
 
 function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, onClick }) {
 
@@ -22,12 +22,20 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
       onClick({ latitude: event.latlng.lat, longitude: event.latlng.lng });
     },
     locationfound: ({ latlng }) => {
-      onClick({ latitude: latlng.lat, longitude: latlng.lng, zoom: 13 });
+      onClick({ latitude: latlng.lat, longitude: latlng.lng, zoom: 15 });
     },
     zoomend: ({ target }) => {
-      const path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${target.getZoom().toFixed(0)}`;
+      const currentPath = window.location.pathname + window.location.search;
+      let path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${target.getZoom().toFixed(0)}`;
       
-      if (path !== window.location.pathname + window.location.search) {
+      if (currentPath.split('/').length === 3) {
+        path = `/${selectedIcao24}/${target.getZoom().toFixed(0)}`;
+      }
+      if (currentPath.indexOf('time=') > -1) {
+        path += `?time=${currentPath.split('time=')[1].split('&').slice(-1)[0]}`;
+      }
+      
+      if (path !== currentPath) {
         window.history.replaceState(null, null, path)
       }
     },
@@ -104,9 +112,9 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
       />
       <div className="leaflet-top leaflet-right">
         <div className="leaflet-control leaflet-bar">
-          <IconButton className="locate-button" onClick={() => onLocate()}>
+          <Button className="locate-button" onClick={() => onLocate()}>
             <FontAwesomeIcon icon={faLocationArrow} />
-          </IconButton>
+          </Button>
         </div>
       </div>
 

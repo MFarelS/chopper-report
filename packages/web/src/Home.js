@@ -1,25 +1,9 @@
-import Grid from '@mui/material/Grid';
 import { MapContainer } from 'react-leaflet';
 import Aircrafts from './Aircrafts';
 import Map from './Map';
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { getFlightPathPrediction } from './lib/helpers';
-
-function toRad(value) {
-  return value * Math.PI / 180;
-}
-
-function distance(lat1, lon1, lat2, lon2) {
-  var R = 6371; // km
-  var dLat = toRad(lat2-lat1);
-  var dLon = toRad(lon2-lon1);
-
-  var a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)); 
-  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-  var d = R * c;
-  return d;
-}
+import { getFlightPathPrediction, distance } from './lib/helpers';
 
 function Home({ api, debug, options, setOption }) {
 
@@ -143,30 +127,26 @@ function Home({ api, debug, options, setOption }) {
   }, []);
 
   return (
-    <Grid className="container" container spacing={2}>
-      <Grid item xs={5}>
-        <div id="map" className="map">
-          <MapContainer className="map-container" center={[lat, lon]} zoom={zoom}>
-            <Map
-              onClick={(location) => {
-                let path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${location.zoom || Number(zoom).toFixed(0)}`;
-                
-                const time = search.get('time');
-                if (time && time !== '') {
-                  path += `?time=${time}`;
-                }
-                
-                navigate(path);
-              }}
-              location={location}
-              options={options}
-              setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}
-              selectedIcao24={state.selectedIcao24}
-              aircrafts={state.aircrafts} />
-          </MapContainer>
-        </div>
-      </Grid>
-      <Grid item xs={7}>
+    <div id="map" className="map">
+      <MapContainer className="map-container" center={[lat, lon]} zoom={zoom}>
+        <Map
+          onClick={(location) => {
+            let path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${location.zoom || Number(zoom).toFixed(0)}`;
+            
+            const time = search.get('time');
+            if (time && time !== '') {
+              path += `?time=${time}`;
+            }
+            
+            navigate(path);
+          }}
+          location={location}
+          options={options}
+          setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}
+          selectedIcao24={state.selectedIcao24}
+          aircrafts={state.aircrafts} />
+      </MapContainer>
+      <div className="aircraft-panel bg-dark">
         <Aircrafts
           debug={debug}
           api={api}
@@ -176,8 +156,8 @@ function Home({ api, debug, options, setOption }) {
           selectedIcao24={state.selectedIcao24}
           location={location}
           aircrafts={state.aircrafts} />
-      </Grid>
-    </Grid>
+      </div>
+    </div>
   );
 }
 

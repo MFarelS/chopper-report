@@ -1,11 +1,43 @@
 .aircraft {
-  padding-top: 10px;
+
 }
 
 .aircraft .thumbnail {
-  object-fit: contain;
+  object-fit: cover;
   width: 100%;
-  height: 140px;
-  padding-top: 20px;
+  height: 180px;
   pointer-events: all;
+}
+
+.aircraft-header {
+  text-align: left;
+  padding: 10px;
+  position: sticky;
+  top: 0;
+}
+
+.aircraft-header p {
+  margin-bottom: 0;
+  margin-block-start: 0;
+  margin-block-end: 0;
+}
+
+.aircraft svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* .aircraft-info-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+} */
+
+.aircraft-container {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.aircraft-info {
+  display: block;
 }

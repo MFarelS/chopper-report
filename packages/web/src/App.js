@@ -4,7 +4,6 @@ import HomeAtTime from './HomeAtTime';
 import Splash from './Splash';
 import Debug from './Debug';
 import { withAPI } from './API';
-import Typography from '@mui/material/Typography';
 import Konami from 'react-konami-code';
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState } from 'react';
@@ -28,10 +27,8 @@ function App({ api }) {
   return (
     <Router>
       <div className="app">
-        <header>
-          <Typography style={{ fontWeight: 500 }} variant="h5" component="h4">
-            <span className="accent">whats</span>hovering<span className="accent">over</span>.me
-          </Typography>
+        <header className="fs-4">
+          <span className="accent">whats</span>hovering<span className="accent">over</span>.me
           <Konami action={() => setDebug(true)}>
             <Debug
               options={options}
@@ -43,9 +40,9 @@ function App({ api }) {
           <Route path="/:icao24/:zoom" element={<HomeAtTime api={api} debug={debug} options={options} setOption={setOption} />} />
           <Route path="/" element={<Splash />} />
         </Routes>
-        <footer>
+        {/* <footer>
           <Typography variant="body1" component="span">By Evan Coleman</Typography>
-        </footer>
+        </footer> */}
       </div>
     </Router>
   );

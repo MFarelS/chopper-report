@@ -6,21 +6,74 @@ body {
 }
 
 .map {
-  height: 50vh;
-  min-height: 500px;
-}
-
-.container {
-  padding: 0 180px;
-  min-height: 80vh;
+  height: 100vh;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 .MuiGrid-item {
   margin: auto !important;
 }
 
-header h4 {
+header {
+  position: absolute;
+  width: 100%;
+  z-index: 10000;
+  text-align: center;
+  height: 60px;
+  pointer-events: none;
+  color: #F1F2F7;
+  font-weight: 500;
+}
+
+header span {
+  padding-top: 10px;
+  pointer-events: none;
+}
+
+.aircraft-panel {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  margin-left: 20px;
+  /* padding: 10px; */
+  z-index: 10000;
+  width: 360px;
+  height: 64%;
+  /*opacity: 0.86;*/
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 22px;
+}
+
+.aircraft-state {
   padding: 20px;
+}
+
+.aircraft-info-title {
+  text-transform: uppercase;
+  font-size: 10px;
+  opacity: 0.8;
+  display: block;
+  text-align: left;
+  padding-bottom: 4px;
+}
+
+.aircraft-info-value {
+  display: block;
+  text-align: left;
+  font-size: 15px;
+}
+
+@media screen and (max-width: 600px) {
+  .aircraft-panel {
+    width: 100%;
+    height: 50%;
+  }
 }
 
 .accent {
@@ -37,6 +90,10 @@ footer {
   bottom: 20px;
   text-align: center;
   width: 100%;
+}
+
+.aircrafts-header {
+
 }
 
 .konami {

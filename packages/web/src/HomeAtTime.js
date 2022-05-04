@@ -1,4 +1,3 @@
-import Grid from '@mui/material/Grid';
 import { MapContainer } from 'react-leaflet';
 import Aircrafts from './Aircrafts';
 import Map from './Map';
@@ -20,8 +19,8 @@ function HomeAtTime({ api, debug, options, setOption }) {
     const end = Math.floor(time);
     Promise
       .all([
-        api.history(icao24, begin, end),
-        api.metadata({ icao24 }),
+        api.history(icao24.toLowerCase(), begin, end),
+        api.metadata({ icao24: icao24.toLowerCase() }),
       ])
       .then(([history, metadata]) => {
         const state = history[history.length - 1];
@@ -43,20 +42,16 @@ function HomeAtTime({ api, debug, options, setOption }) {
   }, [icao24, time, api]);
 
   return (
-    <Grid className="container" container spacing={2}>
-      {aircraft && <Grid item xs={5}>
-        <div id="map" className="map">
-          <MapContainer className="map-container" center={[aircraft.state.latitude, aircraft.state.longitude]} zoom={zoom}>
-            <Map
-              location={{latitude: aircraft.state.latitude, longitude: aircraft.state.longitude}}
-              options={options}
-              setSelectedIcao24={() => console.log('noop')}
-              selectedIcao24={aircraft.state.icao24}
-              aircrafts={{[aircraft.state.icao24]: aircraft}} />
-          </MapContainer>
-        </div>
-      </Grid>}
-      {aircraft && <Grid item xs={7}>
+    <div id="map" className="map">
+      {aircraft && aircraft.state && <MapContainer className="map-container" center={[aircraft.state.latitude, aircraft.state.longitude]} zoom={zoom}>
+        <Map
+          location={{latitude: aircraft.state.latitude, longitude: aircraft.state.longitude}}
+          options={options}
+          setSelectedIcao24={() => console.log('noop')}
+          selectedIcao24={aircraft.state.icao24}
+          aircrafts={{[aircraft.state.icao24]: aircraft}} />
+      </MapContainer>}
+      {aircraft && aircraft.state && <div className="aircraft-panel bg-dark">
         <Aircrafts
           debug={debug}
           api={api}
@@ -66,8 +61,8 @@ function HomeAtTime({ api, debug, options, setOption }) {
           selectedIcao24={aircraft.state.icao24}
           location={{latitude: aircraft.state.latitude, longitude: aircraft.state.longitude}}
           aircrafts={{[aircraft.state.icao24]: aircraft}} />
-      </Grid>}
-    </Grid>
+      </div>}
+    </div>
   );
 }
 

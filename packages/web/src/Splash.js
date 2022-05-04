@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
+import { Spinner } from 'react-bootstrap';
 
 function Splash() {
 
@@ -13,7 +12,7 @@ function Splash() {
         navigator.geolocation
           .getCurrentPosition((position) => {
             console.log("Found location...");
-            navigate(`/${position.coords.latitude.toFixed(5)}/${position.coords.longitude.toFixed(5)}/13`);
+            navigate(`/${position.coords.latitude.toFixed(5)}/${position.coords.longitude.toFixed(5)}/15`);
           });
       }
     } catch (error) {
@@ -23,9 +22,7 @@ function Splash() {
 
   return (
     <div className="splash">
-      <Box sx={{ display: 'flex' }}>
-        <CircularProgress />
-      </Box>
+      <Spinner animation="border" />
     </div>
   );
 }
