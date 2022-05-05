@@ -1,5 +1,6 @@
 .leaflet-container {
   height: 100%;
+  pointer-events: auto;
 }
 
 .plane-icon {
@@ -10,6 +11,26 @@
   font-size: 14px;
   z-index: 999 !important;
   filter: drop-shadow(2px 2px 0 rgb(0 0 0 / 0.3));
+  position: relative;
+  /*padding: 20px;     
+  margin: -20px; 
+  padding-right: 40px;
+  padding-bottom: 40px;
+  margin-right: -40px;
+  margin-bottom: -40px;*/
+  pointer-events: all;
+  cursor: pointer;
+}
+
+.plane-icon::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 300%;
+  height: 300%;
+  z-index: 99999;
+  /*background-color: green;*/
 }
 
 .plane-icon-active {

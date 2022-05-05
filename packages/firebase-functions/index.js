@@ -9,6 +9,8 @@ database.initialize();
 
 exports.updateStates = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
   await jobs.updateStates.run();
+  await new Promise(r => setTimeout(r, 30000));
+  await jobs.updateStates.run();
   return null;
 });
 

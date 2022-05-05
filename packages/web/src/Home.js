@@ -24,8 +24,12 @@ function Home({ api, debug, options, setOption }) {
   const showAll = false;
   const statesFunction = showAll ? api.allStates : api.states;
   const radius = showAll ? 5000: 1500;
+  const hasLocation = lat !== undefined && lon !== undefined;
 
   useEffect(() => {
+    if (!hasLocation) {
+      return;
+    }
     console.log('Updating...');
     if (cancellation) {
       cancellation();
@@ -73,7 +77,10 @@ function Home({ api, debug, options, setOption }) {
 
             return 0;
           });
-        oldState.selectedIcao24 = oldState.allIcao24s[0];
+
+        if (!oldState.selectedIcao24 || oldState.allIcao24s.indexOf(oldState.selectedIcao24) < 0) {
+          oldState.selectedIcao24 = oldState.allIcao24s[0];
+        }
 
         return {
           ...oldState
@@ -81,9 +88,12 @@ function Home({ api, debug, options, setOption }) {
       });
     });
     setCancellation(cancel);
-  }, [lat, lon, api, cancellation, location, search, radius, statesFunction]);
+  }, [hasLocation, lat, lon, api, cancellation, location, search, radius, statesFunction]);
 
   useEffect(() => {
+    if (!hasLocation) {
+      return;
+    }
     if (interval) {
       window.clearInterval(interval);
     }
@@ -124,11 +134,13 @@ function Home({ api, debug, options, setOption }) {
         window.clearInterval(interval);
       }
     }, (1000 * duration) / steps));
-  }, []);
+  // eslint-disable-next-line
+  }, [hasLocation]);
+
 
   return (
     <div id="map" className="map">
-      <MapContainer className="map-container" center={[lat, lon]} zoom={zoom}>
+      <MapContainer className="map-container" center={hasLocation ? [lat, lon] : [40.7128, -74.0060]} zoom={zoom || 13}>
         <Map
           onClick={(location) => {
             let path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${location.zoom || Number(zoom).toFixed(0)}`;
@@ -140,13 +152,16 @@ function Home({ api, debug, options, setOption }) {
             
             navigate(path);
           }}
-          location={location}
+          boundsOptions={{
+            paddingBottomRight: [333, 333],
+          }}
+          location={hasLocation ? location : null}
           options={options}
           setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}
           selectedIcao24={state.selectedIcao24}
           aircrafts={state.aircrafts} />
       </MapContainer>
-      <div className="aircraft-panel bg-dark">
+      <div>
         <Aircrafts
           debug={debug}
           api={api}
@@ -154,7 +169,7 @@ function Home({ api, debug, options, setOption }) {
           options={options}
           setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}
           selectedIcao24={state.selectedIcao24}
-          location={location}
+          location={hasLocation ? location : { latitude: 40.7128, longitude: -74.0060 }}
           aircrafts={state.aircrafts} />
       </div>
     </div>

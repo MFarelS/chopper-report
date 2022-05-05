@@ -145,7 +145,7 @@ export function hoveringStates(location, radius, optionsOrCallback, callbackOrUn
   return states([[box.bbox[0], box.bbox[1]], [box.bbox[2], box.bbox[3]]], time, (event, icao24, state, history) => {
     if (!history) return;
 
-    const now = Math.floor(time);
+    const now = Math.floor(time || Date.now() / 1000);
     const filtered = history
       .filter((s) => turf.booleanWithin(turf.point([s.latitude, s.longitude]), box));
     const isHovering = filtered.length > 1;
@@ -158,6 +158,7 @@ export function hoveringStates(location, radius, optionsOrCallback, callbackOrUn
 
       if (recentStates.length > 0) {
         const hoverTime = now - filtered[0].time;
+
         callback(event, icao24, { hovering_time: hoverTime, ...state }, history);
         return;
       }

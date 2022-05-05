@@ -26,6 +26,16 @@ header {
   pointer-events: none;
   color: #F1F2F7;
   font-weight: 500;
+  top: 10px;
+}
+
+header a {
+  text-decoration: none;
+  color: unset;
+}
+
+header a:vistied {
+  color: unset;
 }
 
 header span {
@@ -37,17 +47,47 @@ header span {
   position: absolute;
   left: 0;
   bottom: 0;
-  margin-left: 20px;
   /* padding: 10px; */
   z-index: 10000;
-  width: 360px;
-  height: 64%;
-  /*opacity: 0.86;*/
-  border-top-left-radius: 6px;
-  border-top-right-radius: 6px;
+  width: 100%;
+  height: 100% !important;
+  animation: showPanel .3s ease-out both;
   overflow-y: scroll;
   overflow-x: hidden;
-  box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 22px;
+  pointer-events: none;
+}
+
+.aircraft-spacer {
+  min-height: 72vh;
+  pointer-events: none;
+}
+
+.aircrafts {
+  opacity: 0.9;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  height: auto;
+  box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 22px;
+}
+
+@media (min-width: 768px) {
+  .aircraft-panel {
+    margin-left: 20px;
+    width: 360px;
+    height: auto !important;
+    overflow-y: unset;
+    overflow-x: unset;
+  }
+
+  .aircrafts {
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  .aircraft-spacer {
+    min-height: unset;
+    height: 0;
+  }
 }
 
 .aircraft-state {
@@ -111,8 +151,8 @@ footer {
 .current-location-outer {
   margin-top: -11px !important;
   margin-left: -11px !important;
-  height: 12px;
-  width: 12px;
+  height: 20px !important;
+  width: 20px !important;
   border-color: white;
   border-style: solid;
   border-radius: 50%;
@@ -142,4 +182,13 @@ footer {
   font-size: 16px !important;
   border-radius: 6.67% !important;
   background-color: white !important;
+  text-align: center;
+}
+
+.locate-button svg {
+  margin-top: 2px;
+}
+
+.locate-spinner {
+  margin-top: 7px;
 }

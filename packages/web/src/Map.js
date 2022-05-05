@@ -4,15 +4,17 @@ import { TileLayer, Marker, Popup, Circle, Polyline, useMapEvents } from 'react-
 import { divIcon } from "leaflet";
 import { renderToString } from "react-dom/server";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPlane, faHelicopter, faLocationArrow } from '@fortawesome/free-solid-svg-icons'
-import { useEffect } from 'react';
+import { faPlane, faHelicopter } from '@fortawesome/free-solid-svg-icons'
+import { useEffect, useState, useCallback } from 'react';
 import * as turf from "@turf/turf";
 import { useParams } from "react-router-dom";
-import Button from 'react-bootstrap/Button';
+import { MdMyLocation as LocationIcon } from "react-icons/md";
+import Spinner from 'react-bootstrap/Spinner';
 
 function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, onClick }) {
 
   const { zoom } = useParams();
+  const [isLocating, setIsLocating] = useState(false);
 
   const map = useMapEvents({
     click: (event) => {
@@ -22,7 +24,8 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
       onClick({ latitude: event.latlng.lat, longitude: event.latlng.lng });
     },
     locationfound: ({ latlng }) => {
-      onClick({ latitude: latlng.lat, longitude: latlng.lng, zoom: 15 });
+      setIsLocating(false);
+      onClick({ latitude: latlng.lat, longitude: latlng.lng, zoom: zoom || 13 });
     },
     zoomend: ({ target }) => {
       const currentPath = window.location.pathname + window.location.search;
@@ -41,13 +44,18 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
     },
   });
 
-  useEffect(() => {
-    map.flyTo([location.latitude, location.longitude]);
-  }, [location, map]);
-
-  const onLocate = () => {
+  const onLocate = useCallback(() => {
+    setIsLocating(true);
     map.locate();
-  };
+  }, [map]);
+
+  useEffect(() => {
+    if (location) {
+      map.flyTo([location.latitude, location.longitude]);
+    } else {
+      onLocate();
+    }
+  }, [location, map, onLocate]);
 
   let makePlaneIcon = (aircraft, isSelected) => {
     const iconMarkup = renderToString(
@@ -81,7 +89,7 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
     className: 'current-location-outer'
   });
 
-  const debugLabels = options.showStateInfo === false ? [] : ((aircrafts[selectedIcao24] || {})
+  const debugLabels = options.showStateInfo === false ? [] : (((aircrafts || {})[selectedIcao24] || {})
     .history || [])
     .map(({ latitude, longitude, baro_altitude, speed, vertical_rate, callsign, time }) => {
       const iconMarkup = renderToString(
@@ -112,16 +120,17 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
       />
       <div className="leaflet-top leaflet-right">
         <div className="leaflet-control leaflet-bar">
-          <Button className="locate-button" onClick={() => onLocate()}>
-            <FontAwesomeIcon icon={faLocationArrow} />
-          </Button>
+          <div className="locate-button" onClick={() => onLocate()}>
+            {isLocating && <Spinner className="locate-spinner" size="sm" animation="border" />}
+            {!isLocating && <LocationIcon />}
+          </div>
         </div>
       </div>
 
       {options.showRadius && <Circle className="radius-circle" key="radius" radius={1500} center={[location.latitude, location.longitude]} />}
-      <Marker key="current-location" position={[location.latitude, location.longitude]} icon={circleIcon} >
+      {location && <Marker key="current-location" position={[location.latitude, location.longitude]} icon={circleIcon} >
         <Popup>{`${location.latitude}, ${location.longitude}`}</Popup>
-      </Marker>
+      </Marker>}
       {debugLabels}
       {aircrafts && Object.keys(aircrafts).map((icao24) => {
         const { state, recentHistory, isHelicopter } = aircrafts[icao24];
@@ -129,18 +138,22 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
         const icon = isHelicopter() ? makeChopperIcon(state, isSelected) : makePlaneIcon(state, isSelected);
         const position = [state.latitude, state.longitude];
         const positions = recentHistory.map((s) => [s.latitude, s.longitude]) || [];
-        const adjusted = positions.length > 0 ? turf.bezierSpline(turf.lineString(positions), {
+        const adjusted = positions.length > 0 ? turf.bezierSpline(turf.lineString([...positions, position]), {
           sharpness: 0.95,
           resolution: 50000,
         }).geometry.coordinates : [];
 
         return (
           <div key={icao24}>
-          <Marker key={`${icao24}:${state.latitude}:${state.longitude}`} position={position} icon={icon} />
-          {isSelected && <Polyline className="route-line" key={`${icao24}:polyline`} positions={adjusted} />}
-          {isSelected && recentHistory.map((state) => (
-            <Circle key={`${icao24}:${state.time}`} radius={4} center={position} />
-          ))}
+            <Marker key={`${icao24}:${state.latitude}:${state.longitude}`} position={position} icon={icon} eventHandlers={{
+              click: (e) => {
+                setSelectedIcao24(icao24);
+              },
+            }} />
+            {isSelected && <Polyline className="route-line" key={`${icao24}:polyline`} positions={adjusted} />}
+            {isSelected && recentHistory.map((state) => (
+              <Circle key={`${icao24}:${state.time}`} radius={4} center={position} />
+            ))}
           </div>
         );
       })}

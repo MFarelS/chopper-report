@@ -43,7 +43,7 @@ function HomeAtTime({ api, debug, options, setOption }) {
 
   return (
     <div id="map" className="map">
-      {aircraft && aircraft.state && <MapContainer className="map-container" center={[aircraft.state.latitude, aircraft.state.longitude]} zoom={zoom}>
+      {aircraft && aircraft.state && <MapContainer className="map-container" boundsOptions={{ paddingBottomRight: [0, -100] }} center={[aircraft.state.latitude, aircraft.state.longitude]} zoom={zoom}>
         <Map
           location={{latitude: aircraft.state.latitude, longitude: aircraft.state.longitude}}
           options={options}
@@ -51,7 +51,7 @@ function HomeAtTime({ api, debug, options, setOption }) {
           selectedIcao24={aircraft.state.icao24}
           aircrafts={{[aircraft.state.icao24]: aircraft}} />
       </MapContainer>}
-      {aircraft && aircraft.state && <div className="aircraft-panel bg-dark">
+      {aircraft && aircraft.state && <div>
         <Aircrafts
           debug={debug}
           api={api}

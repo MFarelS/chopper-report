@@ -1,7 +1,6 @@
 import './App.css';
 import Home from './Home';
 import HomeAtTime from './HomeAtTime';
-import Splash from './Splash';
 import Debug from './Debug';
 import { withAPI } from './API';
 import Konami from 'react-konami-code';
@@ -38,7 +37,7 @@ function App({ api }) {
         <Routes>
           <Route path="/:lat/:lon/:zoom" element={<Home api={api} debug={debug} options={options} setOption={setOption} />} />
           <Route path="/:icao24/:zoom" element={<HomeAtTime api={api} debug={debug} options={options} setOption={setOption} />} />
-          <Route path="/" element={<Splash />} />
+          <Route path="/" element={<Home api={api} debug={debug} options={options} setOption={setOption} />} />
         </Routes>
         {/* <footer>
           <Typography variant="body1" component="span">By Evan Coleman</Typography>

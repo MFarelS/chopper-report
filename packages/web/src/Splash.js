@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
-import { Spinner } from 'react-bootstrap';
+import { MapContainer } from 'react-leaflet';
+import Map from './Map';
 
 function Splash() {
 
@@ -12,7 +13,7 @@ function Splash() {
         navigator.geolocation
           .getCurrentPosition((position) => {
             console.log("Found location...");
-            navigate(`/${position.coords.latitude.toFixed(5)}/${position.coords.longitude.toFixed(5)}/15`);
+            // navigate(`/${position.coords.latitude.toFixed(5)}/${position.coords.longitude.toFixed(5)}/15`);
           });
       }
     } catch (error) {
@@ -22,7 +23,10 @@ function Splash() {
 
   return (
     <div className="splash">
-      <Spinner animation="border" />
+      <MapContainer className="map-container">
+        <Map
+          options={{}} />
+      </MapContainer>
     </div>
   );
 }
