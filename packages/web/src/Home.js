@@ -19,8 +19,8 @@ function Home({ api, debug, options, setOption }) {
   const navigate = useNavigate();
 
   const location = useMemo(() => ({ latitude: lat, longitude: lon }), [lat, lon]);
-  const steps = 1500;
-  const duration = 300; // in seconds
+  const steps = 300;
+  const duration = 60; // in seconds
   const showAll = false;
   const statesFunction = showAll ? api.allStates : api.states;
   const radius = showAll ? 5000: 1500;

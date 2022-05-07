@@ -4,7 +4,7 @@ import * as turf from "@turf/turf";
 class API {
 
   constructor() {
-    this.url = 'https://us-central1-chopper-report.cloudfunctions.net/api';
+    this.url = process.env.NODE_ENV === 'production' ? 'https://us-central1-chopper-report.cloudfunctions.net/api' : 'http://localhost:9000';
     database.initialize();
   }
 
@@ -34,6 +34,10 @@ class API {
         .catch(console.log);
     });
   }
+
+  // reportFAA(icao24) {
+  //   return `${this.url}/report/faa/${icao24}`;
+  // }
 
   async history(icao24, begin, end) {
     return database.history(icao24, begin, end);
@@ -65,6 +69,10 @@ class API {
       return body;
     }
   }
+
+  // async countReport(icao24, reportType) {
+  //   await database.countReport(icao24, reportType);
+  // }
 }
  
 export default API;

@@ -3,6 +3,7 @@ import Aircrafts from './Aircrafts';
 import Map from './Map';
 import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from "react-router-dom";
+import * as turf from '@turf/turf';
 
 function HomeAtTime({ api, debug, options, setOption }) {
 
@@ -17,6 +18,7 @@ function HomeAtTime({ api, debug, options, setOption }) {
 
     const begin = Math.floor(time - (60 * 60 * 3));
     const end = Math.floor(time);
+
     Promise
       .all([
         api.history(icao24.toLowerCase(), begin, end),
@@ -24,9 +26,18 @@ function HomeAtTime({ api, debug, options, setOption }) {
       ])
       .then(([history, metadata]) => {
         const state = history[history.length - 1];
+        const point = turf.point([state.latitude, state.longitude]);
+        const buffered = turf.circle(point, 1.5, { units: 'kilometers', steps: 8 });
+        const box = turf.bboxPolygon(turf.square(turf.bbox(buffered)));
+        const filtered = history
+          .filter((s) => turf.booleanWithin(turf.point([s.latitude, s.longitude]), box));
+        const hoverTime = (time || Math.floor(Date.now() / 1000)) - filtered[0].time;
 
         setAircraft({
-          state,
+          state: {
+            ...state,
+            hovering_time: hoverTime,
+          },
           history,
           metadata,
           distance: 0,

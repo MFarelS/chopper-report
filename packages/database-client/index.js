@@ -17,6 +17,14 @@ export function initialize() {
   firebase.initializeApp(firebaseConfig);
 }
 
+// export async function countReport(icao24, reportType) {
+//   const ref = firebase.app().database().ref(`reports/${reportType}/${icao24}`);
+
+//   await ref.transaction((current) => {
+//     return current + 1;
+//   });
+// }
+
 export async function metadata(icao24) {
   const database = firebase.app().database();
   const ref = database.ref('aircrafts').child(icao24);
@@ -70,7 +78,7 @@ export function states(coordinates, time, callback) {
     radius: l
   });
   const from = time || (new Date()).getTime() / 1000;
-  const begin = Math.floor(from - (60 * 60 * 3));
+  const begin = Math.floor(from - (60 * 60 * 4));
   const end = Math.floor(from);
 
   const onKeyEnteredRegistration = query.on("key_entered", (key, location, distance) => {
@@ -154,7 +162,7 @@ export function hoveringStates(location, radius, optionsOrCallback, callbackOrUn
 
     if (isHovering && !isLanded) {
       const recentStates = filtered
-        .filter((s) => now - s.time < 25 * 60);
+        .filter((s) => now - s.time < 7 * 60);
 
       if (recentStates.length > 0) {
         const hoverTime = now - filtered[0].time;
@@ -163,7 +171,7 @@ export function hoveringStates(location, radius, optionsOrCallback, callbackOrUn
         return;
       }
     } else {
-      console.log(state.callsign, "is not hovering");
+      console.log(state.callsign, "is not hovering", "hovering", isHovering, "landed", isLanded);
     }
 
     callback("exited", icao24, state, history);

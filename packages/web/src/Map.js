@@ -118,8 +118,8 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         url={`https://api.mapbox.com/styles/v1/mapbox/dark-v9/tiles/{z}/{x}/{y}?access_token=${process.env.REACT_APP_MAPBOX_TOKEN}`}
       />
-      <div className="leaflet-top leaflet-right">
-        <div className="leaflet-control leaflet-bar">
+      <div className="leaflet-top leaflet-right me-2">
+        <div className="leaflet-control leaflet-bar me-0">
           <div className="locate-button" onClick={() => onLocate()}>
             {isLocating && <Spinner className="locate-spinner" size="sm" animation="border" />}
             {!isLocating && <LocationIcon />}

@@ -75,7 +75,7 @@ function Aircraft({ api, debug, location, options, state, metadata, history, dis
             <p className="fs-6">{metadata.owner.replace("Llc", "LLC")}</p>
           </Stack>
           {hoverTime && <Stack className="text-end">
-            <span className="fs-5 fw-bold">{hoverTime}</span>
+            <span className="fs-5 fw-bold text-nowrap">{hoverTime}</span>
             <small style={{ fontSize: '0.8rem' }} className="fw-bolder text-muted text-uppercase">in the area</small>
           </Stack>}
         </Stack>

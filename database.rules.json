@@ -38,6 +38,18 @@
         }
       }
     },
+    "reports": {
+      ".read": true,
+      "faa": {
+        ".write": true,
+        "$icao24": {
+          ".validate": "newData.isNumber() && newData.val() == data.val() + 1"
+        }
+      },
+      "$other": {
+        ".validate": false
+      }
+    },
     "states": {
       ".read": true,
       "$state": {
