@@ -12,7 +12,14 @@ module.exports = {
     });
     console.log('[JOBS/update] Found', (states || []).length, 'states.');
     const results = (states || [])
-      .filter((state) => state.on_ground !== true && state.icao24 !== null && state.icao24 !== undefined && state.icao24 !== '')
+      .filter((state) => {
+        return state.on_ground !== true
+          && state.baro_altitude !== 0
+          && state.geo_altitude !== 0
+          && state.icao24 !== null
+          && state.icao24 !== undefined
+          && state.icao24 !== '';
+      })
       .map((state) => {
         return {
           icao24: state.icao24.trim(),

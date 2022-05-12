@@ -70,6 +70,10 @@ class API {
     }
   }
 
+  async hoveringHistory(location, radius, since) {
+    return database.hoveringHistory(location, radius, since);
+  }
+
   // async countReport(icao24, reportType) {
   //   await database.countReport(icao24, reportType);
   // }

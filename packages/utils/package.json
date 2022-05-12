@@ -25,6 +25,7 @@
     "url": "https://github.com/evandcoleman/chopper-report/issues"
   },
   "dependencies": {
+    "@turf/turf": "^6.5.0",
     "node-fetch": "^2.6.7"
   }
 }

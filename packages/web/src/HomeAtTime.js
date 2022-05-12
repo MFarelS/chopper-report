@@ -52,6 +52,8 @@ function HomeAtTime({ api, debug, options, setOption }) {
       .catch(console.log);
   }, [icao24, time, api]);
 
+  console.log('homeattime')
+
   return (
     <div id="map" className="map">
       {aircraft && aircraft.state && <MapContainer className="map-container" boundsOptions={{ paddingBottomRight: [0, -100] }} center={[aircraft.state.latitude, aircraft.state.longitude]} zoom={zoom}>
@@ -66,6 +68,7 @@ function HomeAtTime({ api, debug, options, setOption }) {
         <Aircrafts
           debug={debug}
           api={api}
+          radius={1500}
           allIcao24s={[aircraft.state.icao24]}
           options={options}
           setSelectedIcao24={() => console.log('noop')}

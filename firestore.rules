@@ -1,0 +1,32 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /hoverEvents/{itemId} {
+      allow read: if true
+
+      allow create: if isValidHoverEvent(request.resource.data) &&
+        isSignedIn();
+
+      allow update: if isValidHoverEvent(request.resource.data) &&
+        isSignedIn();
+
+      allow delete: if isSignedIn();
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+  
+      function isValidHoverEvent(event) {
+        return (
+          event.hoverTime is number
+            && event.icao24 is string 
+            && event.startTime is number
+            && event.endTime is number
+            && event.latitude is number
+            && event.longitude is number
+            && event.geohash is string
+        );
+      }
+    }
+  }
+}

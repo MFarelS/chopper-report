@@ -1,7 +1,5 @@
-const opensky = require('./lib/opensky');
-const jetphotos = require('./lib/jetphotos');
-
 module.exports = {
-  opensky,
-  jetphotos,
-}
+  opensky: require('./lib/opensky'),
+  jetphotos: require('./lib/jetphotos'),
+  hover: require('./lib/hover'),
+};

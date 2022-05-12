@@ -1,7 +1,9 @@
 import firebase from 'firebase/app';
 import 'firebase/database';
+import 'firebase/firestore';
 import * as turf from "@turf/turf";
 import { GeoFire } from 'geofire';
+import { geohashQueryBounds, distanceBetween } from 'geofire-common';
 
 export function initialize() {
   const firebaseConfig = {
@@ -142,6 +144,26 @@ export function states(coordinates, time, callback) {
   };
 }
 
+function hoveringTime(states, time, box) {
+  const now = Math.floor(time || Date.now() / 1000);
+  const filtered = states
+    .filter((s) => turf.booleanWithin(turf.point([s.latitude, s.longitude]), box));
+  const isHovering = filtered.length > 1;
+
+  if (isHovering) {
+    const recentStates = filtered
+      .filter((s) => now - s.time < 7 * 60);
+
+    if (recentStates.length > 0) {
+      const hoverTime = now - filtered[0].time;
+
+      return hoverTime;
+    }
+  }
+
+  return null;
+}
+
 export function hoveringStates(location, radius, optionsOrCallback, callbackOrUndefined) {
   const callback = callbackOrUndefined || optionsOrCallback;
   const options = !callbackOrUndefined ? {} : optionsOrCallback;
@@ -153,27 +175,56 @@ export function hoveringStates(location, radius, optionsOrCallback, callbackOrUn
   return states([[box.bbox[0], box.bbox[1]], [box.bbox[2], box.bbox[3]]], time, (event, icao24, state, history) => {
     if (!history) return;
 
-    const now = Math.floor(time || Date.now() / 1000);
-    const filtered = history
-      .filter((s) => turf.booleanWithin(turf.point([s.latitude, s.longitude]), box));
-    const isHovering = filtered.length > 1;
     const isLanded = (Number(state.baro_altitude || state.gps_altitude) <= 0)
       && Number(state.vertical_rate) <= 0;
+    const hoverTime = hoveringTime(history, time, box);
 
-    if (isHovering && !isLanded) {
-      const recentStates = filtered
-        .filter((s) => now - s.time < 7 * 60);
-
-      if (recentStates.length > 0) {
-        const hoverTime = now - filtered[0].time;
-
-        callback(event, icao24, { hovering_time: hoverTime, ...state }, history);
-        return;
-      }
+    if (!isLanded && hoverTime !== null) {
+      callback(event, icao24, { hovering_time: hoverTime, ...state }, history);
     } else {
-      console.log(state.callsign, "is not hovering", "hovering", isHovering, "landed", isLanded);
+      console.log(state.callsign, "is not hovering", "hovering", hoverTime !== null, "landed", isLanded);
+      callback("exited", icao24, state, history);
     }
-
-    callback("exited", icao24, state, history);
   });
+}
+
+export async function hoveringHistory(location, radius, since) {
+  const center = [Number(location.latitude), Number(location.longitude)];
+  const bounds = geohashQueryBounds(center, radius);
+  const db = firebase.app().firestore();
+  const promises = [];
+
+  for (const b of bounds) {
+    const q = db.collection('hoverEvents')
+      .orderBy('geohash')
+      .startAt(b[0])
+      .endAt(b[1]);
+
+    promises.push(q.get());
+  }
+
+  const snapshots = await Promise.all(promises)
+  const matchingDocs = [];
+
+  for (const snap of snapshots) {
+    for (const doc of snap.docs) {
+      if (doc.get('startTime') < since) {
+        continue;
+      }
+
+      const lat = doc.get('latitude');
+      const lng = doc.get('longitude');
+
+      // We have to filter out a few false positives due to GeoHash
+      // accuracy, but most will match
+      const distanceInKm = distanceBetween([lat, lng], center);
+      const distanceInM = distanceInKm * 1000;
+
+      if (distanceInM <= radius) {
+        matchingDocs.push(doc.data());
+      }
+    }
+  }
+
+  return matchingDocs;
 }

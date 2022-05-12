@@ -91,7 +91,7 @@ function Home({ api, debug, options, setOption }) {
   }, [hasLocation, lat, lon, api, cancellation, location, search, radius, statesFunction]);
 
   useEffect(() => {
-    if (!hasLocation) {
+    if (!hasLocation || state.allIcao24s.length === 0) {
       return;
     }
     if (interval) {
@@ -165,6 +165,7 @@ function Home({ api, debug, options, setOption }) {
         <Aircrafts
           debug={debug}
           api={api}
+          radius={radius}
           allIcao24s={state.allIcao24s}
           options={options}
           setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}

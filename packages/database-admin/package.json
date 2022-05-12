@@ -26,6 +26,8 @@
   },
   "dependencies": {
     "firebase-admin": "^10.1.0",
-    "geofire": "^5.2.0"
+    "geofire": "^5.2.0",
+    "geofire-common": "^5.2.0",
+    "moment": "^2.29.3"
   }
 }

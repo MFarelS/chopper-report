@@ -9,8 +9,16 @@ database.initialize();
 
 exports.updateStates = functions.pubsub.schedule('every 1 minutes').onRun(async (context) => {
   await jobs.updateStates.run();
-  await new Promise(r => setTimeout(r, 30000));
-  await jobs.updateStates.run();
+  return null;
+});
+
+exports.archiveStates = functions.pubsub.schedule('0 5 * * *').timeZone('America/New_York').onRun(async (context) => {
+  await jobs.archiveStates.run();
+  return null;
+});
+
+exports.processStates = functions.pubsub.schedule('0 * * * *').timeZone('America/New_York').onRun(async (context) => {
+  await jobs.processStates.run();
   return null;
 });
 

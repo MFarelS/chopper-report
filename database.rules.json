@@ -51,6 +51,7 @@
       }
     },
     "states": {
+      ".indexOn": ["latitude", "longitude"],
       ".read": true,
       "$state": {
         ".write": "auth !== null",
@@ -95,6 +96,60 @@
           ".validate": false
         }
       }
+    },
+    "archivedStates": {
+      "$startYearMonthDay": {
+        "endYearMonthDay": {
+          ".validate": "newData.isString()"
+        },
+        "states" : {
+          ".indexOn": ["latitude", "longitude"],
+          ".read": true,
+          "$state": {
+            ".write": "auth !== null",
+            ".validate": "newData.hasChildren(['icao24', 'time'])",
+            "icao24": {
+              ".validate": "newData.isString()"
+            },
+            "callsign": {
+              ".validate": "newData.isString()"
+            },
+            "time": {
+              ".validate": "newData.isString()"
+            },
+            "last_contact": {
+              ".validate": "newData.isString()"
+            },
+            "latitude": {
+              ".validate": "newData.isNumber()"
+            },
+            "longitude": {
+              ".validate": "newData.isNumber()"
+            },
+            "baro_altitude": {
+              ".validate": "newData.isNumber()"
+            },
+            "velocity": {
+              ".validate": "newData.isNumber()"
+            },
+            "true_track": {
+              ".validate": "newData.isNumber()"
+            },
+            "vertical_rate": {
+              ".validate": "newData.isNumber()"
+            },
+            "gps_altitude": {
+              ".validate": "newData.isNumber()"
+            },
+            "squawk": {
+              ".validate": "newData.isString()"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        }
+      },
     },
     "geofire": {
       ".indexOn": ["g"],

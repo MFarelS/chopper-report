@@ -4,6 +4,12 @@
   },
   "functions": {
     "source": "packages/firebase-functions/webpack",
-    "predeploy": ["cd packages/firebase-functions && npm run build"]
+    "predeploy": [
+      "cd packages/firebase-functions && npm run build"
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }
