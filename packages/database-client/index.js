@@ -68,6 +68,21 @@ export async function history(icao24, begin, end) {
   return values;
 }
 
+export async function lastState(icao24) {
+  const database = firebase.app().database();
+  const snapshot = await database
+    .ref('states')
+    .orderByKey()
+    .startAt(`${icao24}:000000`)
+    .endAt(`${icao24}:ffffff`)
+    .limitToLast(1)
+    .once('value');
+  const value = snapshot.val();
+  const values = Object.values(value || {});
+
+  return values[0];
+}
+
 export function states(coordinates, time, callback) {
   const line = turf.lineString(coordinates);
   const l = turf.length(line, { units: 'kilometers' });

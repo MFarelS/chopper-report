@@ -4,6 +4,8 @@ import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Col from 'react-bootstrap/Col';
 import Stack from 'react-bootstrap/Stack';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+import Popover from 'react-bootstrap/Popover';
 
 import * as moment from 'moment';
 
@@ -16,7 +18,11 @@ import { GiWhirlwind as WindIcon } from "react-icons/gi";
 function Neighborhood({ api, debug, options, location, radius, aircrafts, allIcao24s }) {
 
   const [address, setAddress] = useState(null);
-  const [state, setState] = useState({});
+  const [state, setState] = useState({
+    metadata: {},
+    states: {},
+    hoverTimes: {},
+  });
 
   useEffect(() => {
     try {
@@ -27,7 +33,7 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
 
         if (!state.startTime) {
           const start = moment().subtract(7, 'days');
-          const history = await api.hoveringHistory(location, radius, start.unix());
+          const history = await api.hoveringHistory(location, 2000, start.unix());
           const grouped = history
             .reduce((values, value) => ({
               ...values,
@@ -36,17 +42,23 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
                 value
               ],
             }), {});
+
           const icaos = Object.values(grouped)
             .sort((a, b) => b.length - a.length)
             .map(x => x[0].icao24);
           const metadata = await Promise
-            .all(icaos.map(icao24 => api.metadata({ icao24 })));
-          
+            .all(icaos.map(icao24 => api.metadata({ icao24 }).then(x => ({ ...x, icao24 }))));
+          const states = await Promise
+            .all(icaos.map(icao24 => api.lastState(icao24)));
+
           setState(state => ({
             ...state,
             startTime: start,
             hoverTime: history.reduce((sum, value) => sum + value.hoverTime, 0),
-            topOffenders: metadata.map(x => x.registration).join(', '),
+            topOffenders: metadata.map(x => ({ callsign: x.registration, icao24: x.icao24 })),
+            metadata: metadata.reduce((values, value) => ({ ...values, [value.icao24]: value }), {}),
+            states: states.reduce((values, value) => ({ ...values, [value.icao24]: value }), {}),
+            hoverTimes: Object.keys(grouped).reduce((values, icao24) => ({ ...values, [icao24]: grouped[icao24].reduce((sum, cur) => sum + cur.hoverTime, 0) }), {}),
           }));
         }
       })();
@@ -69,6 +81,39 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
     alertText = `There are ${presentIcaos.length} aircrafts hovering near you`;
     alertIcon = "🤬";
   }
+
+  const renderOverlay = (props) => (
+    <Popover id="aircraft-overlay" {...props} className="bg-light text-dark text-nowrap">
+      <Popover.Header as="h3">
+        {state.metadata[props.icao24]?.callsign}
+      </Popover.Header>
+      <Popover.Body>
+        <Container fluid className="p-0">
+          {state.metadata[props.icao24]?.photos && <Row>
+            <Col xs={12}>
+              <img alt="aircraft" className="thumbnail" src={state.metadata[props.icao24].photos[0]} />
+            </Col>
+          </Row>}
+          {state.metadata[props.icao24]?.manufacturer && <Row className="flex-nowrap">
+            <small className="text-muted" style={{ width: 'auto' }}>Manufacturer</small>
+            <small className="text-end ms-auto" style={{ width: 'auto' }}>{state.metadata[props.icao24].manufacturer}</small>
+          </Row>}
+          {state.metadata[props.icao24]?.model && <Row className="flex-nowrap">
+            <small className="text-muted" style={{ width: 'auto' }}>Model</small>
+            <small className="text-end ms-auto" style={{ width: 'auto' }}>{state.metadata[props.icao24].model}</small>
+          </Row>}
+          {state.states[props.icao24]?.last_contact && <Row className="flex-nowrap">
+            <small className="text-muted" style={{ width: 'auto' }}>Last Seen</small>
+            <small className="text-end ms-auto" style={{ width: 'auto' }}>{moment.unix(state.states[props.icao24].last_contact).fromNow()}</small>
+          </Row>}
+          {state.hoverTimes[props.icao24] && <Row className="flex-nowrap">
+            <small className="text-muted" style={{ width: 'auto' }}>In The Area</small>
+            <small className="text-end ms-auto" style={{ width: 'auto' }}>{moment.duration(state.hoverTimes[props.icao24], 'seconds').humanize()}</small>
+          </Row>}
+        </Container>
+      </Popover.Body>
+    </Popover>
+  );
 
   return (
     <div className={allIcao24s.length > 0 ? 'mb-2' : 'mb-2 mt-auto'}>
@@ -107,7 +152,16 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
             </Col>
             <Col xs={11} className="text-start">
               <small className="fw-bolder text-muted text-uppercase" style={{ fontSize: '0.8rem' }}>Top Offenders</small>
-              <div className="fs-6 pb-2">{state.topOffenders}</div>
+              <div className="fs-6 pb-2">{state.topOffenders?.map(({ callsign, icao24 }, index) => (
+                <OverlayTrigger
+                  key={callsign}
+                  placement="top"
+                  delay={{ show: 250, hide: 250 }}
+                  overlay={(props) => renderOverlay({ ...props, icao24 })}
+                >
+                  <span>{callsign}{index === state.topOffenders.length - 1 ? '' : ', '}</span>
+                </OverlayTrigger>
+              ))}</div>
             </Col>
           </Row>}
         </Container>

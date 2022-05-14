@@ -12,14 +12,30 @@ exports.updateStates = functions.pubsub.schedule('every 1 minutes').onRun(async 
   return null;
 });
 
-exports.archiveStates = functions.pubsub.schedule('0 5 * * *').timeZone('America/New_York').onRun(async (context) => {
-  await jobs.archiveStates.run();
-  return null;
-});
+exports.archiveStates = functions
+  .runWith({
+    memory: '1GB',
+    timeoutSeconds: 300,
+  })
+  .pubsub
+  .schedule('0 5 * * *')
+  .timeZone('America/New_York')
+  .onRun(async (context) => {
+    await jobs.archiveStates.run();
+    return null;
+  });
 
-exports.processStates = functions.pubsub.schedule('0 * * * *').timeZone('America/New_York').onRun(async (context) => {
-  await jobs.processStates.run();
-  return null;
-});
+exports.processStates = functions
+  .runWith({
+    memory: '1GB',
+    timeoutSeconds: 300,
+  })
+  .pubsub
+  .schedule('0 * * * *')
+  .timeZone('America/New_York')
+  .onRun(async (context) => {
+    await jobs.processStates.run();
+    return null;
+  });
 
 exports.api = functions.https.onRequest(api.app);

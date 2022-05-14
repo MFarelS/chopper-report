@@ -43,6 +43,10 @@ class API {
     return database.history(icao24, begin, end);
   }
 
+  async lastState(icao24) {
+    return database.lastState(icao24);
+  }
+
   async aircraft({ icao24 }) {
     const response = await fetch(`${this.url}/aircraft?icao24=${icao24}`);
     const { aircraft } = await response.json();
