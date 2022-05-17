@@ -78,6 +78,10 @@ class API {
     return database.hoveringHistory(location, radius, since);
   }
 
+  async hoverEvents(icao24) {
+    return database.hoverEvents(icao24);
+  }
+
   // async countReport(icao24, reportType) {
   //   await database.countReport(icao24, reportType);
   // }

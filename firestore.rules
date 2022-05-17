@@ -1,6 +1,74 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    match /states {
+      allow read: if true
+    }
+    
+    match /states/{itemId} {
+      allow read: if true
+
+      allow create: if isValidState(request.resource.data) &&
+        isSignedIn();
+
+      allow update: if isValidState(request.resource.data) &&
+        isSignedIn();
+
+      allow delete: if isSignedIn();
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+  
+      function isValidState(state) {
+        return (
+          state.callsign is string
+            && state.icao24 is string 
+            && state.time is number
+            && state.last_contact is number
+            && state.latitude is number
+            && state.longitude is number
+            && state.geohash is string
+            && state.baro_altitude is number
+            && state.gps_altitude is number
+            && state.velocity is number
+            && state.true_track is number
+            && state.vertical_rate is number
+            && state.squawk is string
+        );
+      }
+    }
+
+    match /aircrafts/{itemId} {
+      allow read: if true
+
+      allow create: if isValidAircraft(request.resource.data) &&
+        isSignedIn();
+
+      allow update: if isValidAircraft(request.resource.data) &&
+        isSignedIn();
+
+      allow delete: if isSignedIn();
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+  
+      function isValidAircraft(aircraft) {
+        return (
+          aircraft.photos is list
+            && aircraft.registration is string 
+            && aircraft.manufactuer is string
+            && aircraft.model is string
+            && aircraft.typecode is string
+            && aircraft.serialNumber is string
+            && aircraft.icaoAircraftClass is string
+            && aircraft.owner is string
+            && aircraft.lastUpdated is string
+        );
+      }
+    }
+
     match /hoverEvents/{itemId} {
       allow read: if true
 

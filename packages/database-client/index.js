@@ -2,6 +2,7 @@ import firebase from 'firebase/app';
 import 'firebase/database';
 import 'firebase/firestore';
 import * as turf from "@turf/turf";
+import * as moment from "moment";
 import { GeoFire } from 'geofire';
 import { geohashQueryBounds, distanceBetween } from 'geofire-common';
 
@@ -28,38 +29,46 @@ export function initialize() {
 // }
 
 export async function metadata(icao24) {
-  const database = firebase.app().database();
-  const ref = database.ref('aircrafts').child(icao24);
-  const snapshot = await ref.once('value');
-  const value = snapshot.val();
+  const database = firebase.app().firestore();
+  const ref = database.collection('aircrafts').doc(icao24);
+  const snapshot = await ref.get();
+  const value = snapshot.data();
 
-  return value;
+  return {
+    ...value,
+    manufacturer: (value.manufacturer || '').replace("Bell Helicopter Textron Canada", "Bell"),
+  };
 }
 
 export async function state(icao24, time) {
-  const database = firebase.app().database();
+  const database = firebase.app().firestore();
   const snapshot = await database
-    .ref('states')
-    .orderByKey()
+    .collection('states')
+    .orderBy('time')
+    .where('icao24', '==', icao24)
     .startAt(`${icao24}:`)
     .endAt(`${icao24}:\uf8ff`)
     .limitToLast(1)
-    .once('value');
-  const value = snapshot.val();
+    .get();
+  const value = snapshot.docs.reduce((values, value) => ({ ...values, [value.id]: value.data() }), {});
   const key = Object.keys(value)[0];
 
   return value[key];
 }
 
 export async function history(icao24, begin, end) {
-  const database = firebase.app().database();
+  const date = moment.unix(begin);
+  const currentPeriodStart = moment().subtract(7, 'days');
+
+  const database = firebase.app().firestore();
   const snapshot = await database
-    .ref('states')
-    .orderByKey()
-    .startAt(`${icao24}:${begin}`)
-    .endAt(`${icao24}:${end}`)
-    .once('value');
-  const value = snapshot.val();
+    .collection('states')
+    .where('icao24', '==', icao24)
+    .where('time', '>=', begin)
+    .where('time', '<=', end)
+    .orderBy('time', 'asc')
+    .get();
+  const value = snapshot.docs.reduce((values, value) => ({ ...values, [value.id]: value.data() }), {});
   const values = Object.values(value || {})
     .sort((x, y) => {
       return x.time - y.time;
@@ -69,15 +78,14 @@ export async function history(icao24, begin, end) {
 }
 
 export async function lastState(icao24) {
-  const database = firebase.app().database();
+  const database = firebase.app().firestore();
   const snapshot = await database
-    .ref('states')
-    .orderByKey()
-    .startAt(`${icao24}:000000`)
-    .endAt(`${icao24}:ffffff`)
+    .collection('states')
+    .orderBy('time')
+    .where('icao24', '==', icao24)
     .limitToLast(1)
-    .once('value');
-  const value = snapshot.val();
+    .get();
+  const value = snapshot.docs.reduce((values, value) => ({ ...values, [value.id]: value.data() }), {});
   const values = Object.values(value || {});
 
   return values[0];
@@ -85,77 +93,74 @@ export async function lastState(icao24) {
 
 export function states(coordinates, time, callback) {
   const line = turf.lineString(coordinates);
-  const l = turf.length(line, { units: 'kilometers' });
+  const radius = turf.length(line, { units: 'kilometers' });
   const p = turf.center(turf.points(coordinates));
-  const database = firebase.app().database();
-  const states = database.ref('states');
-  const geoFire = new GeoFire(database.ref('geofire'));
-  const query = geoFire.query({
-    center: p.geometry.coordinates,
-    radius: l
-  });
+  const center = p.geometry.coordinates;
   const from = time || (new Date()).getTime() / 1000;
   const begin = Math.floor(from - (60 * 60 * 4));
   const end = Math.floor(from);
+  const bounds = geohashQueryBounds(center, radius);
+  const db = firebase.app().firestore();
 
-  const onKeyEnteredRegistration = query.on("key_entered", (key, location, distance) => {
-    Promise
-      .all([
-        state(key),
-        history(key, begin, end)
-      ])
-      .then(([state, history]) => {
-        console.log(state.callsign + " entered query at " + location + " (" + distance.toFixed(2) + " km from center)");
-        callback(
-          "entered",
-          key,
-          state,
-          history
-        );
-      })
-      .catch(console.log);
-  });
+  // const filterSnapshot = (snapshot) => {
+  //   const matchingDocs = [];
 
-  const onKeyExitedRegistration = query.on("key_exited", (key, location, distance) => {
-    Promise
-      .all([
-        state(key),
-        history(key, begin, end)
-      ])
-      .then(([state, history]) => {
-        console.log(state.callsign + " exited query to " + location + " (" + distance.toFixed(2) + " km from center)");
-        callback(
-          "exited",
-          key,
-          state,
-          history
-        );
-      })
-      .catch(console.log);
-  });
+  //   for (const snap of snapshots) {
+  //     for (const doc of snap.docs) {
+  //       const lat = doc.get('latitude');
+  //       const lng = doc.get('longitude');
+  //       const distanceInKm = distanceBetween([lat, lng], center);
 
-  const onKeyMovedRegistration = query.on("key_moved", (key, location, distance) => {
-    Promise
-      .all([
-        state(key),
-        history(key, begin, end)
-      ])
-      .then(([state, history]) => {
-        console.log(state.callsign + " moved within query to " + location + " (" + distance.toFixed(2) + " km from center)");
-        callback(
-          "moved",
-          key,
-          state,
-          history
-        );
-      })
-      .catch(console.log);
-  });
+  //       if (distanceInKm <= radius) {
+  //         matchingDocs.push(doc.data());
+  //       }
+  //     }
+  //   }
+
+  //   return matchingDocs;
+  // }
+
+  const listeners = []
+
+  for (const b of bounds) {
+    const query = db.collection('cities')
+      .orderBy('geohash')
+      .startAt(b[0])
+      .endAt(b[1]);
+
+    const unsubscribe = query
+      .onSnapshot((snapshot) => {
+        snapshot
+          .docChanges()
+          .forEach((change) => {
+            const eventName = change.type === "added" ? "entered" : change.type === "removed" ? "exited" : "moved";
+            const key = change.doc.id;
+            const state = change.doc.data();
+            const distance = distanceBetween([state.latitude, state.longitude], center);
+
+            Promise
+              .all([
+                state(key),
+                history(key, begin, end)
+              ])
+              .then(([state, history]) => {
+                console.log(state.callsign + " " + eventName + " query (" + distance.toFixed(2) + " km from center)");
+                callback(
+                  eventName,
+                  key,
+                  state,
+                  history
+                );
+              })
+              .catch(console.log);
+          });
+      });
+
+    listeners.push(unsubscribe);
+  }  
 
   return () => {
-    onKeyEnteredRegistration.cancel();
-    onKeyExitedRegistration.cancel();
-    onKeyMovedRegistration.cancel();
+    listeners.forEach(x => x());
   };
 }
 
@@ -242,4 +247,17 @@ export async function hoveringHistory(location, radius, since) {
   }
 
   return matchingDocs;
+}
+
+export async function hoverEvents(icao24) {
+  const db = firebase.app().firestore();
+  const snapshot = await db.collection('hoverEvents')
+    .where('icao24', '==', icao24)
+    .get();
+
+  return snapshot.docs
+    .map(x => x.data())
+    .sort((x, y) => {
+      return y.startTime - x.startTime;
+    });
 }

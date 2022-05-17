@@ -22,11 +22,12 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
     metadata: {},
     states: {},
     hoverTimes: {},
+    hoverEvents: {},
   });
 
   useEffect(() => {
-    try {
-      (async () => {
+    (async () => {
+      try {
         // const response = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${location.latitude}&lon=${location.longitude}&format=json`);
         // const { address } = await response.json();
         // setAddress(address);
@@ -58,13 +59,14 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
             topOffenders: metadata.map(x => ({ callsign: x.registration, icao24: x.icao24 })),
             metadata: metadata.reduce((values, value) => ({ ...values, [value.icao24]: value }), {}),
             states: states.reduce((values, value) => ({ ...values, [value.icao24]: value }), {}),
+            hoverEvents: grouped,
             hoverTimes: Object.keys(grouped).reduce((values, icao24) => ({ ...values, [icao24]: grouped[icao24].reduce((sum, cur) => sum + cur.hoverTime, 0) }), {}),
           }));
         }
-      })();
-    } catch (error) {
-      console.log(error);
-    }
+      } catch (error) {
+        console.log(error);
+      }
+    })();
   }, [location, radius, api]);
 
   const presentIcaos = allIcao24s.filter(icao24 => aircrafts[icao24]);
@@ -84,15 +86,16 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
 
   const renderOverlay = (props) => (
     <Popover id="aircraft-overlay" {...props} className="bg-light text-dark text-nowrap">
-      <Popover.Header as="h3">
-        {state.metadata[props.icao24]?.callsign}
-      </Popover.Header>
       <Popover.Body>
         <Container fluid className="p-0">
           {state.metadata[props.icao24]?.photos && <Row>
             <Col xs={12}>
               <img alt="aircraft" className="thumbnail" src={state.metadata[props.icao24].photos[0]} />
             </Col>
+          </Row>}
+          {state.metadata[props.icao24]?.registration && <Row className="flex-nowrap">
+            <small className="text-muted" style={{ width: 'auto' }}>Callsign</small>
+            <small className="text-end ms-auto" style={{ width: 'auto' }}>{state.metadata[props.icao24].registration}</small>
           </Row>}
           {state.metadata[props.icao24]?.manufacturer && <Row className="flex-nowrap">
             <small className="text-muted" style={{ width: 'auto' }}>Manufacturer</small>
@@ -106,8 +109,12 @@ function Neighborhood({ api, debug, options, location, radius, aircrafts, allIca
             <small className="text-muted" style={{ width: 'auto' }}>Last Seen</small>
             <small className="text-end ms-auto" style={{ width: 'auto' }}>{moment.unix(state.states[props.icao24].last_contact).fromNow()}</small>
           </Row>}
+          {state.hoverEvents[props.icao24] && <Row className="flex-nowrap">
+            <small className="text-muted" style={{ width: 'auto' }}>Hovered</small>
+            <small className="text-end ms-auto" style={{ width: 'auto' }}>{state.hoverEvents[props.icao24].length} {state.hoverEvents[props.icao24].length === 1 ? 'time' : 'times'}</small>
+          </Row>}
           {state.hoverTimes[props.icao24] && <Row className="flex-nowrap">
-            <small className="text-muted" style={{ width: 'auto' }}>In The Area</small>
+            <small className="text-muted" style={{ width: 'auto' }}>Time Hovering</small>
             <small className="text-end ms-auto" style={{ width: 'auto' }}>{moment.duration(state.hoverTimes[props.icao24], 'seconds').humanize()}</small>
           </Row>}
         </Container>

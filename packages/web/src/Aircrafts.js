@@ -14,7 +14,7 @@ function Aircrafts({ api, debug, options, radius, location, aircrafts, allIcao24
   console.log('aircrafts');
 
   return (
-    <div>
+    <div className="aircraft-panel-container">
       <Stack className="aircraft-panel">
         {allIcao24s.length > 0 && <div className="aircraft-spacer" />}
         <Neighborhood radius={radius} aircrafts={aircrafts} api={api} allIcao24s={allIcao24s} location={location} />

@@ -25,9 +25,11 @@
     "url": "https://github.com/evandcoleman/chopper-report/issues"
   },
   "dependencies": {
+    "@mapbox/polyline": "^1.1.1",
     "firebase-admin": "^10.1.0",
     "geofire": "^5.2.0",
     "geofire-common": "^5.2.0",
+    "lodash": "^4.17.21",
     "moment": "^2.29.3"
   }
 }
