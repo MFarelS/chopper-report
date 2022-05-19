@@ -14,13 +14,15 @@ module.exports = {
         states = states.states;
       }
 
+      console.log('[JOBS/process] Found', Object.keys(states).length, 'states...');
+
       await database.processStates(states);
+
+      return null;
     } else {
       console.log('[JOBS/process] Processing recent states...');
 
-      await database.processRecentStates();
+      return await database.processRecentStates();
     }
-
-    console.log('[JOBS/process] Finished processing.');
   },
 };

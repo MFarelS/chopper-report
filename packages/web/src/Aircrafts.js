@@ -8,7 +8,7 @@ import { useState } from 'react';
 import Stack from 'react-bootstrap/Stack';
 import Modal from 'react-bootstrap/Modal'
 
-function Aircrafts({ api, debug, options, radius, location, aircrafts, allIcao24s, setSelectedIcao24, selectedIcao24 }) {
+function Aircrafts({ api, debug, options, radius, location, setLocation, setAircraftsOverride, aircrafts, allIcao24s, setSelectedIcao24, selectedIcao24 }) {
 
   const [modalImage, setModalImage] = useState(null);
   console.log('aircrafts');
@@ -17,7 +17,16 @@ function Aircrafts({ api, debug, options, radius, location, aircrafts, allIcao24
     <div className="aircraft-panel-container">
       <Stack className="aircraft-panel">
         {allIcao24s.length > 0 && <div className="aircraft-spacer" />}
-        <Neighborhood radius={radius} aircrafts={aircrafts} api={api} allIcao24s={allIcao24s} location={location} />
+        <Neighborhood
+          radius={radius}
+          aircrafts={aircrafts}
+          api={api}
+          allIcao24s={allIcao24s}
+          selectedIcao24={selectedIcao24}
+          setSelectedIcao24={setSelectedIcao24}
+          setAircraftsOverride={setAircraftsOverride}
+          setLocation={setLocation}
+          location={location} />
         {allIcao24s.length > 0 && <div className={`bg-dark aircrafts${allIcao24s.length > 0 ? ' pb-3' : ''}`}>
           {aircrafts[selectedIcao24] && <Aircraft
             api={api}

@@ -1,8 +1,8 @@
 import firebase from 'firebase/app';
-import 'firebase/database';
 import 'firebase/firestore';
 import * as turf from "@turf/turf";
 import * as moment from "moment";
+// import { hover } from '@chopper-report/utils';
 import { GeoFire } from 'geofire';
 import { geohashQueryBounds, distanceBetween } from 'geofire-common';
 
@@ -36,7 +36,7 @@ export async function metadata(icao24) {
 
   return {
     ...value,
-    manufacturer: (value.manufacturer || '').replace("Bell Helicopter Textron Canada", "Bell"),
+    manufacturer: (value?.manufacturer || '').replace("Bell Helicopter Textron Canada", "Bell"),
   };
 }
 
@@ -91,6 +91,16 @@ export async function lastState(icao24) {
   return values[0];
 }
 
+export async function getFlight(flightID) {
+  const database = firebase.app().firestore();
+  const snapshot = await database
+    .collection('flights')
+    .doc(flightID)
+    .get();
+
+  return snapshot.data();
+}
+
 export function states(coordinates, time, callback) {
   const line = turf.lineString(coordinates);
   const radius = turf.length(line, { units: 'kilometers' });
@@ -123,7 +133,7 @@ export function states(coordinates, time, callback) {
   const listeners = []
 
   for (const b of bounds) {
-    const query = db.collection('cities')
+    const query = db.collection('states')
       .orderBy('geohash')
       .startAt(b[0])
       .endAt(b[1]);
@@ -138,12 +148,9 @@ export function states(coordinates, time, callback) {
             const state = change.doc.data();
             const distance = distanceBetween([state.latitude, state.longitude], center);
 
-            Promise
-              .all([
-                state(key),
-                history(key, begin, end)
-              ])
-              .then(([state, history]) => {
+            history(key, begin, end)
+              .then((history) => {
+                console.log(state);
                 console.log(state.callsign + " " + eventName + " query (" + distance.toFixed(2) + " km from center)");
                 callback(
                   eventName,
@@ -253,6 +260,7 @@ export async function hoverEvents(icao24) {
   const db = firebase.app().firestore();
   const snapshot = await db.collection('hoverEvents')
     .where('icao24', '==', icao24)
+    .orderBy('startTime')
     .get();
 
   return snapshot.docs

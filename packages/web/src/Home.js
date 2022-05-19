@@ -15,6 +15,8 @@ function Home({ api, debug, options, setOption }) {
   });
   const [cancellation, setCancellation] = useState(null);
   const [interval, setUpdateInterval] = useState(null);
+  const [aircraftsOverride, setAircraftsOverride] = useState(null);
+  const [mapLocation, setMapLocation] = useState(null);
   const { lat, lon, zoom } = useParams();
   const navigate = useNavigate();
 
@@ -140,9 +142,10 @@ function Home({ api, debug, options, setOption }) {
 
   return (
     <div id="map" className="map">
-      <MapContainer className="map-container" center={hasLocation ? [lat, lon] : [40.7128, -74.0060]} zoom={zoom || 13}>
+      <MapContainer className="map-container" center={hasLocation ? (mapLocation ? [mapLocation.latitude, mapLocation.longitude] : [lat, lon]) : [40.7128, -74.0060]} zoom={zoom || 13}>
         <Map
           onClick={(location) => {
+            setMapLocation(null);
             let path = `/${Number(location.latitude).toFixed(5)}/${Number(location.longitude).toFixed(5)}/${location.zoom || Number(zoom).toFixed(0)}`;
             
             const time = search.get('time');
@@ -155,11 +158,11 @@ function Home({ api, debug, options, setOption }) {
           boundsOptions={{
             paddingBottomRight: [333, 333],
           }}
-          location={hasLocation ? location : null}
+          location={hasLocation ? (mapLocation || location) : null}
           options={options}
           setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}
           selectedIcao24={state.selectedIcao24}
-          aircrafts={state.aircrafts} />
+          aircrafts={aircraftsOverride || state.aircrafts} />
       </MapContainer>
       <div>
         <Aircrafts
@@ -167,7 +170,9 @@ function Home({ api, debug, options, setOption }) {
           api={api}
           radius={radius}
           allIcao24s={state.allIcao24s}
+          setLocation={setMapLocation}
           options={options}
+          setAircraftsOverride={setAircraftsOverride}
           setSelectedIcao24={(value) => setState(state => ({ ...state, selectedIcao24: value }))}
           selectedIcao24={state.selectedIcao24}
           location={hasLocation ? location : { latitude: 40.7128, longitude: -74.0060 }}

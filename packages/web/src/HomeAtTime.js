@@ -83,11 +83,16 @@ function HomeAtTime({ api, debug, options, setOption }) {
         radius={1500}
         allIcao24s={[aircraft.state.icao24]}
         options={options}
+        setLocation={setLocation}
         setSelectedIcao24={() => console.log('noop')}
         selectedIcao24={aircraft.state.icao24}
         location={{latitude: aircraft.state.latitude, longitude: aircraft.state.longitude}}
         aircrafts={{[aircraft.state.icao24]: aircraft}} />}
-      {!time && <HoverHistory api={api} icao24={icao24} setLocation={setLocation} setHistoryAircraft={setHistoryAircraft} />}
+      {!time && <div className="aircraft-panel-container">
+        <div className="aircraft-panel">
+          <HoverHistory api={api} icao24={icao24} setLocation={setLocation} setHistoryAircraft={setHistoryAircraft} />
+        </div>
+      </div>}
     </div>
   );
 }

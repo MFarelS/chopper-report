@@ -1,5 +1,4 @@
 const admin = require('firebase-admin');
-const { getStorage } = require('firebase-admin/storage');
 const geofire = require('geofire');
 const geofireCommon = require('geofire-common');
 const moment = require('moment');
@@ -9,49 +8,56 @@ const fs = require('fs');
 const path = require('path');
 const _ = require('lodash');
 
-const flattenObject = (obj = {}, res = {}, extraKey = '') => {
-  for (key in obj) {
-    if (typeof obj[key] !== 'object') {
-      res[extraKey + key] = obj[key];
-    } else {
-      flattenObject(obj[key], res, `${extraKey}${key}/`);
-    }
-  }
-
-  return res;
-};
-
 const processStates = async (states) => {
   const keys = Object.keys(states || {});
-  const hoveringAircrafts = hover.getEvents(states, {
-    excludeStates: true,
-  });
-
-  console.log('[DATABASE]', 'Downloaded', keys.length, 'states...');
-
-  // console.log(hoveringAircrafts);
+  const { hoveringAircrafts, flights } = hover.getEvents(states);
   const db = admin.firestore();
-  const batch = db.batch();
-
   const collection = db.collection('hoverEvents');
-
   const icaos = Object.keys(hoveringAircrafts);
-  for (let i = 0; i < icaos.length; i += 1) {
-    const icao24 = icaos[i];
-    const events = hoveringAircrafts[icao24];
-    
-    for (let j = 0; j < events.length; j += 1) {
-      const event = events[j];
-      const ref = collection.doc(`${icao24}:${event.startTime}`);
+  const events = icaos.flatMap(icao24 => hoveringAircrafts[icao24]);
+
+  console.log('[DATABASE]', 'Processing', events.length, 'hover events...');
+
+  const chunks = _.chunk(events, 500);
+
+  for (let i = 0; i < chunks.length; i += 1) {
+    const batch = db.batch();
+    const chunk = chunks[i];
+
+    for (let j = 0; j < chunk.length; j += 1) {
+      const event = chunk[j];
+      const states = event.states;
+      delete event.states;
+      const ref = collection.doc(`${event.icao24}:${event.startTime}`);
       
       batch.set(ref, {
         ...event,
-        icao24,
+        routePolyline: polyline.encode(states.map(state => [state.latitude, state.longitude])),
       });
     }
+
+    await batch.commit();
   }
 
-  await batch.commit();
+  const flightIDs = Object.keys(flights);
+  console.log('[DATABASE]', 'Processing', flightIDs.length, 'flights...');
+  const flightChunks = _.chunk(flightIDs, 500);
+  const flightCollection = db.collection('flights');
+
+  for (let i = 0; i < flightChunks.length; i += 1) {
+    const batch = db.batch();
+    const chunk = flightChunks[i];
+
+    for (let j = 0; j < chunk.length; j += 1) {
+      const flightID = chunk[j];
+      const flight = flights[flightID];
+      const ref = flightCollection.doc(flightID);
+      
+      batch.set(ref, flight);
+    }
+
+    await batch.commit();
+  }
 };
 
 const writeStates = async (states) => {
@@ -91,7 +97,7 @@ const readArchive = async (key) => {
     throw new Error("Invalid key " + key);
   }
 
-  const bucket = getStorage().bucket();
+  const bucket = firebase.storage().bucket();
   const year = key.substring(0, 4);
 
   try {
@@ -110,7 +116,7 @@ const readArchive = async (key) => {
 }
 
 const writeArchive = async (archive) => {
-  const bucket = getStorage().bucket();
+  const bucket = firebase.storage().bucket();
   const year = archive.startYearMonthDay.substring(0, 4);
   const file = bucket.file(`statesArchive/${year}/${archive.startYearMonthDay}.json`);
 
@@ -125,6 +131,94 @@ const mergeArchives = async (archive) => {
   const existing = await readArchive(archive.startYearMonthDay);
   const merged = _.merge(existing || {}, archive);
   await writeArchive(merged);
+}
+
+const writeStatesToArchive = async (states) => {
+  const database = admin.firestore();
+  const keys = Object.keys(states);
+  const now = moment();
+
+  console.log('[DATABASE]', 'Archiving', keys.length, 'states...');
+
+  const archives = keys
+    .reduce((values, key) => {
+      const state = states[key];
+      const time = moment.unix(state.time);
+      const archiveStart = time.startOf('isoWeek').add(5, 'hours');
+      const archiveEnd = moment(archiveStart).add(1, 'week');
+      const startKey = archiveStart.format('YYYYMMDD');
+      const endKey = archiveEnd.subtract(1, 'day').format('YYYYMMDD');
+
+      if (values[startKey]) {
+        const existing = values[startKey];
+        values[startKey].states[key] = state;
+
+        return values;
+        // return {
+        //   ...values,
+        //   [startKey]: {
+        //     ...values[startKey],
+        //     states: {
+        //       ...(values[startKey].states || {}),
+        //       [key]: state,
+        //     }
+        //   }
+        // }
+      } else {
+        values[startKey] = {
+          startYearMonthDay: startKey,
+          endYearMonthDay: endKey,
+          states: {
+            [key]: state,
+          },
+        }
+        return values;
+        // return {
+        //   ...values,
+        //   [startKey]: {
+        //     startYearMonthDay: startKey,
+        //     endYearMonthDay: endKey,
+        //     states: {
+        //       [key]: state,
+        //     },
+        //   },
+        // };
+      }
+    }, {});
+
+  const archiveKeys = Object.keys(archives);
+
+  console.log('[DATABASE]', 'Archiving', archiveKeys.length, 'periods...');
+
+  for (let i = 0; i < archiveKeys.length; i += 1) {
+    const archiveKey = archiveKeys[i];
+    const archive = archives[archiveKey];
+
+    console.log('[DATABASE]', 'Archiving', archiveKey, '...');
+
+    await mergeArchives(archive);
+  }
+}
+
+const deleteStates = async (states) => {
+  const database = admin.firestore();
+  const keys = Object.keys(states);
+
+  console.log('[DATABASE]', 'Deleting', keys.length, 'archived states...');
+
+  const chunks = _.chunk(keys, 500);
+
+  for (let i = 0; i < chunks.length; i += 1) {
+    const batch = database.batch();
+
+    console.log('[DATABASE]', 'Deleting states', `${i * 500}-${(i * 500) + Math.min(500, chunks[i].length)}...`);
+
+    for (let j = 0; j < chunks[i].length; j += 1) {
+      batch.delete(database.collection('states').doc(chunks[i][j]));
+    }
+
+    await batch.commit();
+  }
 }
 
 module.exports = {
@@ -148,89 +242,52 @@ module.exports = {
     return snapshot.data;
   },
   writeMetadata,
-  archiveStates: async () => {
-    const archiveBefore = moment().subtract(7, 'days');
+  archiveStates: async (states) => {
+    const archiveBefore = moment().subtract(30, 'days');
     console.log('[DATABASE]', 'Archiving states before', archiveBefore.toISOString(), '...');
 
     const database = admin.firestore();
-    let stop = false;
+    
+    if (states && states.length > 0) {
+      await writeStatesToArchive(states);
+      await deleteStates(states);
+    } else {
+      let stop = false;
+      const allStates = {};
+      let lastTime = 0
 
-    while (!stop) {
-      const snapshot = await database
-        .collection('states')
-        .where('time', '<=', archiveBefore.unix())
-        .limit(500)
-        .get();
+      while (!stop) {
+        if (lastTime > 0) {
+          console.log('[DATABASE]', 'Downloading states after', lastTime, '...');
+        }
 
-      if (snapshot.docs.length === 0) {
-        stop = true;
-        return;
+        let query = database
+          .collection('states')
+          .where('time', '<=', archiveBefore.unix())
+          .orderBy('time')
+          .limit(5000);
+        if (Object.keys(allStates).length > 0) {
+          query = query.where('time', '>', lastTime);
+        }
+        const snapshot = await query
+          .get();
+
+        if (snapshot.docs.length === 0) {
+          stop = true;
+        } else {
+          console.log('[DATABASE]', 'Downloaded', snapshot.docs.length, 'states...');
+
+          const states = snapshot.docs.reduce((values, value) => {
+            values[value.id] = value.data();
+            return values;
+          }, {});
+          Object.assign(allStates, states);
+          lastTime = snapshot.docs.slice(-1)[0].data().time;
+        }
       }
 
-      console.log('[DATABASE]', 'Downloaded', snapshot.docs.length, 'states...');
-
-      const states = snapshot.docs.reduce((values, value) => ({ ...values, [value.id]: value.data() }), {});
-      const keys = Object.keys(states);
-      const now = moment();
-
-      const archives = keys
-        .reduce((values, key) => {
-          const state = states[key];
-          const time = moment.unix(state.time);
-          const archiveStart = time.startOf('isoWeek').add(5, 'hours');
-          const archiveEnd = moment(archiveStart).add(1, 'week');
-          const startKey = archiveStart.format('YYYYMMDD');
-          const endKey = archiveEnd.subtract(1, 'day').format('YYYYMMDD');
-
-          if (values[startKey]) {
-            return {
-              ...values,
-              [startKey]: {
-                ...values[startKey],
-                states: {
-                  ...(values[startKey].states || {}),
-                  [key]: state,
-                }
-              }
-            }
-          } else {
-            return {
-              ...values,
-              [startKey]: {
-                startYearMonthDay: startKey,
-                endYearMonthDay: endKey,
-                states: {
-                  [key]: state,
-                },
-              },
-            };
-          }
-        }, {});
-
-      const archiveKeys = Object.keys(archives);
-
-      console.log('[DATABASE]', 'Archiving', archiveKeys.length, 'periods...');
-
-      for (let i = 0; i < archiveKeys.length; i += 1) {
-        const archiveKey = archiveKeys[i];
-        const archive = archives[archiveKey];
-
-        console.log('[DATABASE]', 'Archiving', archiveKey, '...');
-
-        await mergeArchives(archive);
-      }
-
-      console.log('[DATABASE]', 'Deleting', keys.length, 'archived states...');
-
-      const batch = database.batch();
-
-      for (let i = 0; i < keys.length; i += 1) {
-        batch.delete(database.collection('states').doc(keys[i]));
-      }
-
-      await batch.commit();
-
-      await new Promise(r => setTimeout(r, 1500));
+      await writeStatesToArchive(allStates);
+      await deleteStates(allStates);
     }
   },
   processRecentStates: async () => {
@@ -240,57 +297,22 @@ module.exports = {
     const database = admin.firestore();
     const snapshot = await database
       .collection('states')
-      .orderByKey()
-      .startAt(`000000:${processAfter.unix()}`)
+      .orderBy('time')
+      .where('time', '>', processAfter.unix())
       .get();
-    const states = snapshot.docs.reduce((values, doc) => ({ ...values, [doc.id]: doc.data() }), {});
+    const states = snapshot.docs.reduce((values, value) => {
+      values[value.id] = value.data();
+      return values;
+    }, {});
 
     console.log('[DATABASE]', 'Downloaded', Object.keys(states).length, 'states...');
 
-    return await processStates(states);
+    await processStates(states);
 
-    // const database = admin.database();
-    // const snapshot = await database
-    //     .ref('archivedStates/20220509/states')
-    //     .orderByKey()
-    //     .once('value');
-    // const states = snapshot.val();
-    // await processStates(states);
+    return states;
   },
   processStates,
   migrate: async () => {
-    const database = admin.database();
-    const db = admin.firestore();
-    let stop = false;
-
-    while (!stop) {
-      const batch = db.batch();
-      const snapshot = await database
-        .ref('aircrafts')
-        .orderByKey()
-        .limitToFirst(500)
-        .once('value');
-      const aircrafts = snapshot.val();
-      const keys = Object.keys(aircrafts || {});
-
-      console.log('[DATABASE]', 'Downloaded', keys.length, 'aircrafts...');
-
-      if (keys.length === 0) {
-        stop = true;
-      }
-
-      for (let i = 0; i < keys.length; i += 1) {
-        await writeMetadata(keys[i], aircrafts[keys[i]], batch);
-      }
-
-      await batch.commit();
-
-      const deletions = keys
-        .reduce((values, key) => ({ ...values, [key]: null }), {});
-
-      console.log('[DATABASE]', 'Deleting', keys.length, 'migrated aircrafts...');
-
-      await database.ref('aircrafts').update(deletions);
-    }
+    
   },
 };

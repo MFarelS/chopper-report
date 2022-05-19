@@ -39,6 +39,10 @@ class API {
   //   return `${this.url}/report/faa/${icao24}`;
   // }
 
+  async getFlight(flightID) {
+    return database.getFlight(flightID);
+  }
+
   async history(icao24, begin, end) {
     return database.history(icao24, begin, end);
   }

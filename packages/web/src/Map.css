@@ -43,10 +43,6 @@
   stroke: #EB4E3D !important;
 }
 
-path.leaflet-interactive {
-  stroke: #65C466;
-}
-
 .debug-label {
   color: white;
   font-size: 9px;

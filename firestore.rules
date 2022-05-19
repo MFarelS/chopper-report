@@ -69,6 +69,31 @@ service cloud.firestore {
       }
     }
 
+    match /flights/{itemId} {
+      allow read: if true
+
+      allow create: if isValidFlight(request.resource.data) &&
+        isSignedIn();
+
+      allow update: if isValidFlight(request.resource.data) &&
+        isSignedIn();
+
+      allow delete: if isSignedIn();
+
+      function isSignedIn() {
+        return request.auth != null;
+      }
+  
+      function isValidFlight(flight) {
+        return (
+          flight.icao24 is string 
+            && flight.startTime is number
+            && flight.endTime is number
+            && flight.routePolyline is string
+        );
+      }
+    }
+
     match /hoverEvents/{itemId} {
       allow read: if true
 
@@ -93,6 +118,7 @@ service cloud.firestore {
             && event.latitude is number
             && event.longitude is number
             && event.geohash is string
+            && event.flightID is string
         );
       }
     }

@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@turf/turf": "^6.5.0",
+    "lodash": "^4.17.21",
     "node-fetch": "^2.6.7"
   }
 }

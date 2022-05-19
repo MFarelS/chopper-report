@@ -1,4 +1,47 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "hoverEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "icao24",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startTime",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "states",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "icao24",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "time",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "states",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "icao24",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "time",
+          "order": "DESCENDING"
+        }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }

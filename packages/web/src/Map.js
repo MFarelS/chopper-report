@@ -11,7 +11,7 @@ import { useParams } from "react-router-dom";
 import { MdMyLocation as LocationIcon } from "react-icons/md";
 import Spinner from 'react-bootstrap/Spinner';
 
-function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, onClick }) {
+function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, onClick, points }) {
 
   const { zoom } = useParams();
   const [isLocating, setIsLocating] = useState(false);
@@ -150,9 +150,9 @@ function Map({ location, options, aircrafts, setSelectedIcao24, selectedIcao24, 
                 setSelectedIcao24(icao24);
               },
             }} />
-            {isSelected && <Polyline className="route-line" key={`${icao24}:polyline`} positions={adjusted} />}
-            {isSelected && recentHistory.map((state) => (
-              <Circle key={`${icao24}:${state.time}`} radius={4} center={position} />
+            {isSelected && <Polyline pathOptions={{ color: '#65C466' }} className="route-line" key={`${icao24}:polyline`} positions={adjusted} />}
+            {isSelected && positions.map((point, index) => (
+              <Circle key={`circle-${icao24}:${index}`} radius={4} center={point} pathOptions={{ fillOpacity: 1, color: '#65C466' }} />
             ))}
           </div>
         );

@@ -13,6 +13,10 @@ function Actions({ api, aircrafts, selectedIcao24 }) {
   const [hideFAA, setHideFAA] = useState({})
   const [showFAAModal, setShowFAAModal] = useState(false);
 
+  if (!aircrafts[selectedIcao24]) {
+    return (<></>);
+  }
+
   return (
     <>
       <Stack className="mt-4">
