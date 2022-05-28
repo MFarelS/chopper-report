@@ -49,7 +49,8 @@ function HomeAtTime({ api, debug, options, setOption }) {
             isHelicopter: () => {
               return metadata.icaoAircraftClass.startsWith("H")
                 || metadata.manufacturer.split(" ").indexOf("Bell") > -1
-                || metadata.manufacturer.split(" ").indexOf("Robinson") > -1;
+                || metadata.manufacturer.split(" ").indexOf("Robinson") > -1
+                || (metadata.manufacturer || "").indexOf("Helicopter") > -1;
             },
           });
         })

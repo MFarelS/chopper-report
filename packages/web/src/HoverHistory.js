@@ -13,8 +13,13 @@ import {
   IoCloudOutline as CloudIcon,
   IoCompassOutline as CompassIcon,
 } from 'react-icons/io5';
+import {
+  GiAirplaneArrival as LandIcon,
+  GiAirplaneDeparture as TakeOffIcon,
+  GiWhirlwind as WindIcon
+} from "react-icons/gi";
 
-function HoverHistory({ api, icao24, setLocation, setHistoryAircraft }) {
+function HoverHistory({ api, icao24, setLocation, location, setHistoryAircraft }) {
 
   const [hoverEvents, setHoverEvents] = useState([]);
   const [metadata, setMetadata] = useState(null);
@@ -23,11 +28,19 @@ function HoverHistory({ api, icao24, setLocation, setHistoryAircraft }) {
   console.log('hover history');
 
   useEffect(() => {
-    api.hoverEvents(icao24)
+    api.hoverEvents(icao24, moment().subtract(7, 'days').unix())
       .then((hoverEvents) => {
-        setHoverEvents(hoverEvents);
+        const filtered = hoverEvents
+          .filter((event) => {
+            const distance = turf.distance(
+              turf.point([event.latitude, event.longitude]),
+              turf.point([location.latitude, location.longitude])
+            );
 
-        const flightIDs = [...new Set(hoverEvents.map(event => event.flightID))];
+            return distance < 2
+          });
+
+        const flightIDs = [...new Set(filtered.map(event => event.flightID))];
 
         return Promise.all(flightIDs.map(api.getFlight))
           .then((flights) => {
@@ -37,9 +50,12 @@ function HoverHistory({ api, icao24, setLocation, setHistoryAircraft }) {
                   values[`${value.icao24}:${value.startTime}:${value.endTime}`] = value;
                   return values;
                 }, {}));
+          })
+          .then((flights) => {
+            setFlights(flights);
+            setHoverEvents(filtered.reverse());
           });
       })
-      .then(setFlights)
       .catch(console.log);
     api.metadata({ icao24 })
       .then(setMetadata)
@@ -49,7 +65,6 @@ function HoverHistory({ api, icao24, setLocation, setHistoryAircraft }) {
   const selectEvent = (event) => {
     const points = polyline.decode(event.routePolyline);
     const center = turf.getCoord(turf.center(turf.points(points)));
-    console.log(center);
     const lastPoint = points[0];
     // setLocation({ latitude: center[0], longitude: center[1] });
 
@@ -68,6 +83,7 @@ function HoverHistory({ api, icao24, setLocation, setHistoryAircraft }) {
         metadata,
         distance: 0,
         recentHistory: history,
+        flight: flights[event.flightID],
         isHelicopter: () => {
           if (!metadata) {
             return false;
@@ -75,34 +91,102 @@ function HoverHistory({ api, icao24, setLocation, setHistoryAircraft }) {
 
           return (metadata.icaoAircraftClass?.startsWith("H") || false)
             || (metadata.manufacturer?.split(" ").indexOf("Bell") || -1) > -1
-            || (metadata.manufacturer?.split(" ").indexOf("Robinson") || -1) > -1;
+            || (metadata.manufacturer?.split(" ").indexOf("Robinson") || -1) > -1
+            || (metadata.manufacturer || "").indexOf("Helicopter") > -1;
         },
       }
     });
   };
 
+  const hoverFlights = hoverEvents
+    .reduce((values, event) => {
+      const dateKey = moment.unix(event.startTime).format('YYYYMMDD');
+
+      if (values[dateKey]) {
+        if (values[dateKey][event.flightID]) {
+          values[dateKey][event.flightID].unshift(event);
+        } else {
+          values[dateKey][event.flightID] = [event];
+        }
+      } else {
+        values[dateKey] = {
+          [event.flightID]: [event],
+        };
+      }
+
+      return values;
+    }, {});
+
   return (
-    <Container fluid>
-      {/*{state.hoverTime && <Row className="mt-3 ps-1">
-        <Col xs={1}>
-          <PlaneIcon className="text-muted" style={{ width: 20, height: 20 }} />
-        </Col>
-        <Col xs={11} className="text-start">
-          <small className="fw-bolder text-muted text-uppercase" style={{ fontSize: '0.8rem' }}>Aircrafts have hovered for</small>
-          <div className="fs-6 pb-2">{moment.duration(state.hoverTime, 'seconds').humanize()}</div>
-        </Col>
-      </Row>}*/}
-      <Row>
-        <Col xs={12}>
-          <ListGroup>
-            {hoverEvents.map(event => (
-              <ListGroup.Item key={event.startTime} action href={`#${event.startTime}`} onClick={() => selectEvent(event)}>
-                {moment.unix(event.startTime).fromNow()}
-              </ListGroup.Item>
-            ))}
-          </ListGroup>
+    <Container fluid className="ms-1 mt-2">
+      <Row className="mb-2">
+        <Col xs={12} className="text-start">
+          <span>Hover Log</span>
         </Col>
       </Row>
+      {Object.keys(hoverFlights).sort((x, y) => parseInt(y) - parseInt(x)).map((dateKey) => {
+        const dateFlights = hoverFlights[dateKey];
+        const elements = Object.keys(dateFlights).map((flightID) => {
+          const flight = flights[flightID];
+          const events = dateFlights[flightID];
+
+          return (
+            <>
+            <Row className="ms-1">
+              <Col xs={1}>
+                <TakeOffIcon className="text-muted" style={{ width: 20, height: 20 }} />
+              </Col>
+              <Col xs={11}>
+                <small className="text-muted fw-bold">
+                  {moment.unix(flight.startTime).format('h:mm a')}
+                </small>
+              </Col>
+            </Row>
+            {events.map((event) => (
+              <Row
+                className="ms-1 align-baseline text-hover-underline-span"
+                style={{ cursor: 'pointer' }}
+                onMouseEnter={() => selectEvent(event)}
+                onMouseLeave={() => setHistoryAircraft({})}
+              >
+                <Col xs={1}></Col>
+                <Col xs={11}>
+                  <small className="text-muted fw-bold me-2">
+                    {moment.unix(event.startTime).format('h:mm a')}
+                  </small>
+                  <span>
+                    Hovers for {moment.duration((event.endTime - event.startTime) * 1000).humanize()}
+                  </span>
+                </Col>
+              </Row>
+            ))}
+            <Row className="ms-1">
+              <Col xs={1}>
+                <LandIcon className="text-muted" style={{ width: 20, height: 20 }} />
+              </Col>
+              <Col xs={11}>
+                <small className="text-muted fw-bold">
+                  {moment.unix(flight.endTime).format('h:mm a')}
+                </small>
+              </Col>
+            </Row>
+            </>
+          );
+        });
+
+        return (
+          <div className="mb-2">
+            <Row>
+              <Col xs={12}>
+                <small className="text-uppercase text-muted fw-bold ms-1">
+                  {moment(dateKey, 'YYYYMMDD').format('dddd, MMMM Do YYYY')}
+                </small>
+              </Col>
+            </Row>
+            {elements}
+          </div>
+        );
+      })}
     </Container>
   );
 }

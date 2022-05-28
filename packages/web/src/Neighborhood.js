@@ -17,7 +17,7 @@ import {
 } from 'react-icons/io5';
 import { GiWhirlwind as WindIcon } from "react-icons/gi";
 
-function Neighborhood({ api, debug, options, location, setLocation, setAircraftsOverride, radius, aircrafts, allIcao24s, selectedIcao24, setSelectedIcao24 }) {
+function Neighborhood({ api, debug, options, location, setLocation, setAircraftsOverride, startTime, hoverEvents, radius, aircrafts, allIcao24s, selectedIcao24, setSelectedIcao24 }) {
 
   const [address, setAddress] = useState(null);
   const [state, setState] = useState({
@@ -34,9 +34,7 @@ function Neighborhood({ api, debug, options, location, setLocation, setAircrafts
         // const { address } = await response.json();
         // setAddress(address);
 
-        const start = moment().subtract(7, 'days');
-        const history = await api.hoveringHistory(location, 1500, start.unix());
-        const grouped = history
+        const grouped = hoverEvents
           .reduce((values, value) => ({
             ...values,
             [value.icao24]: [
@@ -48,15 +46,17 @@ function Neighborhood({ api, debug, options, location, setLocation, setAircrafts
         const icaos = Object.values(grouped)
           .sort((a, b) => b.length - a.length)
           .map(x => x[0].icao24);
-        const metadata = await Promise
-          .all(icaos.map(icao24 => api.metadata({ icao24 }).then(x => ({ ...x, icao24 }))));
+        const metadata = (await Promise
+          .all(icaos.map(icao24 => api.metadata({ icao24 }).then(x => ({ ...x, icao24 })))))
+          .filter(x => x.registration);
         const states = await Promise
           .all(icaos.map(icao24 => api.lastState(icao24)));
+        console.log(metadata);
 
         setState(state => ({
           ...state,
-          startTime: start,
-          hoverTime: history.reduce((sum, value) => sum + value.hoverTime, 0),
+          startTime,
+          hoverTime: hoverEvents.reduce((sum, value) => sum + value.hoverTime, 0),
           topOffenders: metadata.map(x => ({ callsign: x.registration, icao24: x.icao24 })),
           metadata: metadata.reduce((values, value) => ({ ...values, [value.icao24]: value }), {}),
           states: states.reduce((values, value) => {
@@ -73,7 +73,7 @@ function Neighborhood({ api, debug, options, location, setLocation, setAircrafts
         console.log(error);
       }
     })();
-  }, [location, radius, api]);
+  }, [location, radius, api, hoverEvents]);
 
   const presentIcaos = allIcao24s.filter(icao24 => aircrafts[icao24]);
 
@@ -145,7 +145,7 @@ function Neighborhood({ api, debug, options, location, setLocation, setAircrafts
           </Row>}
           {state.startTime && <Row className="mt-3 ps-1">
             <Col xs={12} className="text-start">
-              <span>In your area in the last {moment().diff(state.startTime, 'days')} days</span>
+              <span>In your area in the last {(options?.time ? moment.unix(options.time) : moment()).diff(state.startTime, 'days')} days</span>
             </Col>
           </Row>}
           {state.hoverTime && <Row className="mt-3 ps-1">
@@ -170,13 +170,18 @@ function Neighborhood({ api, debug, options, location, setLocation, setAircrafts
                   delay={{ show: 250, hide: 250 }}
                   overlay={(props) => renderOverlay({ ...props, icao24 })}
                 >
-                  <span><a onClick={() => setSelectedIcao24(icao24)}>{callsign}</a>{index === state.topOffenders.length - 1 ? '' : ', '}</span>
+                  <span style={{ cursor: 'pointer' }} className={selectedIcao24 === icao24 ? 'fw-bold' : ''}><a onClick={() => setSelectedIcao24(icao24)}>{callsign}</a>{index === state.topOffenders.length - 1 ? '' : ', '}</span>
                 </OverlayTrigger>
               ))}</div>
             </Col>
           </Row>}
         </Container>
-        {selectedIcao24 && <HoverHistory api={api} icao24={selectedIcao24} setLocation={setLocation} setHistoryAircraft={setAircraftsOverride} />}
+        {selectedIcao24 && <HoverHistory
+          api={api}
+          icao24={selectedIcao24}
+          setLocation={setLocation}
+          location={location}
+          setHistoryAircraft={setAircraftsOverride} />}
       </Stack>
     </div>
   );

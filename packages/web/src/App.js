@@ -9,17 +9,22 @@ import { useState } from 'react';
 
 function App({ api }) {
 
-  const [debug, setDebug] = useState(false);
-
   const [options, setOptions] = useState({
-    showStateInfo: debug,
-    showRadius: debug,
-    showHistory: debug,
+    showStateInfo: false,
+    showRadius: false,
+    showHistory: false,
   });
 
   const setOption = (key, value) => {
     console.log(key, value);
-    setOptions({ ...options, [key]: value });
+    if (value === null) {
+      setOptions(options => {
+        delete options[key];
+        return options;
+      })
+    } else {
+      setOptions({ ...options, [key]: value });
+    }
     console.log(options);
   };
 
@@ -28,16 +33,14 @@ function App({ api }) {
       <div className="app">
         <header className="fs-4">
           <span className="accent">whats</span>hovering<span className="accent">over</span>.me
-          <Konami action={() => setDebug(true)}>
-            <Debug
-              options={options}
-              setOption={setOption} />
-          </Konami>
+          <Debug
+            options={options}
+            setOption={setOption} />
         </header>
         <Routes>
-          <Route path="/:lat/:lon/:zoom" element={<Home api={api} debug={debug} options={options} setOption={setOption} />} />
-          <Route path="/:icao24/:zoom" element={<HomeAtTime api={api} debug={debug} options={options} setOption={setOption} />} />
-          <Route path="/" element={<Home api={api} debug={debug} options={options} setOption={setOption} />} />
+          <Route path="/:lat/:lon/:zoom" element={<Home api={api} options={options} setOption={setOption} />} />
+          <Route path="/:icao24/:zoom" element={<HomeAtTime api={api} options={options} setOption={setOption} />} />
+          <Route path="/" element={<Home api={api} options={options} setOption={setOption} />} />
         </Routes>
         {/* <footer>
           <Typography variant="body1" component="span">By Evan Coleman</Typography>

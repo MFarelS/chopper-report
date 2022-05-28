@@ -201,3 +201,27 @@ footer {
 .locate-spinner {
   margin-top: 7px;
 }
+
+.text-hover-underline:hover {
+  text-decoration: underline;
+}
+
+.text-hover-underline-span > span:hover {
+  text-decoration: underline;
+}
+
+.text-hover-bold:hover {
+  font-weight: bold;
+}
+
+.react-datetime-picker input {
+  color: white;
+}
+
+.react-datetime-picker select {
+  color: white;
+}
+
+.react-datetime-picker svg {
+  stroke:  white;
+}

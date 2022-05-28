@@ -47,6 +47,10 @@ class API {
     return database.history(icao24, begin, end);
   }
 
+  async historicStates(location, radius, begin, end) {
+    return database.historicStates(location, radius, begin, end);
+  }
+
   async lastState(icao24) {
     return database.lastState(icao24);
   }
@@ -82,8 +86,8 @@ class API {
     return database.hoveringHistory(location, radius, since);
   }
 
-  async hoverEvents(icao24) {
-    return database.hoverEvents(icao24);
+  async hoverEvents(icao24, since) {
+    return database.hoverEvents(icao24, since);
   }
 
   // async countReport(icao24, reportType) {

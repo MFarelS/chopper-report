@@ -77,6 +77,33 @@ export async function history(icao24, begin, end) {
   return values;
 }
 
+export async function historicStates(location, radius, begin, end) {
+  const bounds = geohashQueryBounds(location, radius);
+  const date = moment.unix(begin);
+
+  const db = firebase.app().firestore();
+  let docs = [];
+
+  for (const b of bounds) {
+    const snapshot = await db.collection('states')
+      .orderBy('geohash')
+      .startAt(b[0])
+      .endAt(b[1])
+      .get();
+
+    docs = docs.concat(snapshot.docs);
+  }
+  
+  const value = docs.reduce((values, value) => ({ ...values, [value.id]: value.data() }), {});
+  const values = Object.values(value || {})
+    .filter((state) => state.time <= end && state.time >= begin)
+    .sort((x, y) => {
+      return x.time - y.time;
+    });
+
+  return values;
+}
+
 export async function lastState(icao24) {
   const database = firebase.app().firestore();
   const snapshot = await database
@@ -147,19 +174,22 @@ export function states(coordinates, time, callback) {
             const key = change.doc.id;
             const state = change.doc.data();
             const distance = distanceBetween([state.latitude, state.longitude], center);
+            const isNew = state.time >= end;
 
-            history(key, begin, end)
-              .then((history) => {
-                console.log(state);
-                console.log(state.callsign + " " + eventName + " query (" + distance.toFixed(2) + " km from center)");
-                callback(
-                  eventName,
-                  key,
-                  state,
-                  history
-                );
-              })
-              .catch(console.log);
+            if (isNew) {
+              history(key, begin, end)
+                .then((history) => {
+                  console.log(state);
+                  console.log(state.callsign + " " + eventName + " query (" + distance.toFixed(2) + " km from center)");
+                  callback(
+                    eventName,
+                    key,
+                    state,
+                    history
+                  );
+                })
+                .catch(console.log);
+            }
           });
       });
 
@@ -256,16 +286,18 @@ export async function hoveringHistory(location, radius, since) {
   return matchingDocs;
 }
 
-export async function hoverEvents(icao24) {
+export async function hoverEvents(icao24, since) {
   const db = firebase.app().firestore();
-  const snapshot = await db.collection('hoverEvents')
-    .where('icao24', '==', icao24)
-    .orderBy('startTime')
-    .get();
+  let query = db.collection('hoverEvents')
+    .orderBy('startTime');
+  if (icao24) {
+    query = query.where('icao24', '==', icao24);
+  }
+  if (since) {
+    query = query.where('startTime', '>=', since);
+  }
+  const snapshot = await query.get();
 
   return snapshot.docs
-    .map(x => x.data())
-    .sort((x, y) => {
-      return y.startTime - x.startTime;
-    });
+    .map(x => x.data());
 }

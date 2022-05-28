@@ -18,10 +18,10 @@ exports.processStates = functions
     timeoutSeconds: 540,
   })
   .pubsub
-  .schedule('0 * * * *')
+  .schedule('0 */4 * * *')
   .timeZone('America/New_York')
   .onRun(async (context) => {
-    await jobs.processStates.run();
+    await jobs.processStates.run([]);
     return null;
   });
 
@@ -31,7 +31,7 @@ exports.archiveStates = functions
     timeoutSeconds: 540,
   })
   .pubsub
-  .schedule('30 * * * *')
+  .schedule('30 */4 * * *')
   .timeZone('America/New_York')
   .onRun(async (context) => {
     await jobs.archiveStates.run();

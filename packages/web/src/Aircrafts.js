@@ -8,7 +8,7 @@ import { useState } from 'react';
 import Stack from 'react-bootstrap/Stack';
 import Modal from 'react-bootstrap/Modal'
 
-function Aircrafts({ api, debug, options, radius, location, setLocation, setAircraftsOverride, aircrafts, allIcao24s, setSelectedIcao24, selectedIcao24 }) {
+function Aircrafts({ api, debug, options, radius, location, setLocation, setAircraftsOverride, hoverEvents, startTime, aircrafts, allIcao24s, setSelectedIcao24, selectedIcao24 }) {
 
   const [modalImage, setModalImage] = useState(null);
   console.log('aircrafts');
@@ -26,6 +26,8 @@ function Aircrafts({ api, debug, options, radius, location, setLocation, setAirc
           setSelectedIcao24={setSelectedIcao24}
           setAircraftsOverride={setAircraftsOverride}
           setLocation={setLocation}
+          hoverEvents={hoverEvents}
+          startTime={startTime}
           location={location} />
         {allIcao24s.length > 0 && <div className={`bg-dark aircrafts${allIcao24s.length > 0 ? ' pb-3' : ''}`}>
           {aircrafts[selectedIcao24] && <Aircraft

@@ -97,12 +97,13 @@ const readArchive = async (key) => {
     throw new Error("Invalid key " + key);
   }
 
-  const bucket = firebase.storage().bucket();
+  const bucket = admin.storage().bucket();
   const year = key.substring(0, 4);
+  const month = key.substring(4, 6);
 
   try {
     const [response] = await bucket
-      .file(`statesArchive/${year}/${key}.json`)
+      .file(`states/${year}/${month}/${key}.json`)
       .download();
 
     return JSON.parse(response.toString());
@@ -116,9 +117,10 @@ const readArchive = async (key) => {
 }
 
 const writeArchive = async (archive) => {
-  const bucket = firebase.storage().bucket();
-  const year = archive.startYearMonthDay.substring(0, 4);
-  const file = bucket.file(`statesArchive/${year}/${archive.startYearMonthDay}.json`);
+  const bucket = admin.storage().bucket();
+  const year = archive.dateKey.substring(0, 4);
+  const month = archive.dateKey.substring(4, 6);
+  const file = bucket.file(`states/${year}/${month}/${archive.dateKey}.json`);
 
   await file.save(JSON.stringify(archive), {
     metadata: {
@@ -128,7 +130,7 @@ const writeArchive = async (archive) => {
 }
 
 const mergeArchives = async (archive) => {
-  const existing = await readArchive(archive.startYearMonthDay);
+  const existing = await readArchive(archive.dateKey);
   const merged = _.merge(existing || {}, archive);
   await writeArchive(merged);
 }
@@ -144,45 +146,23 @@ const writeStatesToArchive = async (states) => {
     .reduce((values, key) => {
       const state = states[key];
       const time = moment.unix(state.time);
-      const archiveStart = time.startOf('isoWeek').add(5, 'hours');
-      const archiveEnd = moment(archiveStart).add(1, 'week');
-      const startKey = archiveStart.format('YYYYMMDD');
-      const endKey = archiveEnd.subtract(1, 'day').format('YYYYMMDD');
+      const archiveStart = time.startOf('day');
+      const archiveEnd = time.endOf('day');
+      const dateKey = archiveStart.format('YYYYMMDD');
 
-      if (values[startKey]) {
-        const existing = values[startKey];
-        values[startKey].states[key] = state;
+      if (values[dateKey]) {
+        const existing = values[dateKey];
+        values[dateKey].states[key] = state;
 
         return values;
-        // return {
-        //   ...values,
-        //   [startKey]: {
-        //     ...values[startKey],
-        //     states: {
-        //       ...(values[startKey].states || {}),
-        //       [key]: state,
-        //     }
-        //   }
-        // }
       } else {
-        values[startKey] = {
-          startYearMonthDay: startKey,
-          endYearMonthDay: endKey,
+        values[dateKey] = {
+          dateKey,
           states: {
             [key]: state,
           },
         }
         return values;
-        // return {
-        //   ...values,
-        //   [startKey]: {
-        //     startYearMonthDay: startKey,
-        //     endYearMonthDay: endKey,
-        //     states: {
-        //       [key]: state,
-        //     },
-        //   },
-        // };
       }
     }, {});
 
@@ -313,6 +293,33 @@ module.exports = {
   },
   processStates,
   migrate: async () => {
-    
+    const input = path.resolve('/Users/evan/Downloads/20220509.json');
+    const archive = JSON.parse(await fs.promises.readFile(input));
+    const keys = Object.keys(archive.states);
+    const newArchives = keys
+      .reduce((values, stateKey) => {
+        const dateKey = moment.unix(archive.states[stateKey].time).format('YYYYMMDD');
+
+        if (values[dateKey]) {
+          values[dateKey].states[stateKey] = archive.states[stateKey];
+        } else {
+          values[dateKey] = {
+            dateKey,
+            states: {
+              [stateKey]: archive.states[stateKey],
+            },
+          };
+        }
+
+        return values;
+      }, {});
+
+    const archivesToWrite = Object.keys(newArchives);
+
+    for (let i = 0; i < archivesToWrite.length; i += 1) {
+      console.log('[DATABASE]', 'Archiving', archivesToWrite[i], '...');
+      await writeArchive(newArchives[archivesToWrite[i]]);
+      await new Promise(r => setTimeout(r, 2000));
+    }
   },
 };
